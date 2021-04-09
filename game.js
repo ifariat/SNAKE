@@ -2,7 +2,7 @@ let canvas = document.createElement("canvas");
 document.querySelector("body").appendChild(canvas);
 let ctx = canvas ? canvas.getContext("2d") : null;
 
-function resolution(width = 400, height = 400) {
+function cnvRes(width = 400, height = 400) {
     ctx.canvas.width = width;
     ctx.canvas.height = height;
 }
@@ -11,21 +11,23 @@ let pubVars = {
     snakeLength: undefined,
     food: undefined,
     currentHue: undefined,
-    fractions: undefined
+    fractions: undefined,
+    historyPath: [],
+    tails: [],
 }
 let helpers = {
     collision(isSelfCol, args) {
         if (isSelfCol) {
             if (args.x == pubVars.food.x && args.y == pubVars.food.y) {
                 pubVars.food.respawnFood();
-                tails.push(new Snake(pubVars.snakeLength - 1, "tail"));
+                pubVars.tails.push(new Snake(pubVars.snakeLength - 1, "tail"));
                 pubVars.snakeLength++;
                 pubVars.snake.delay - 0.2;
             }
         } else {
-            for (let i = 0; i < historyPath.length; i++) {
-                if (args.x == historyPath[i].x && args.y == historyPath[i].y) {
-                    alert('self-collision detected');
+            for (let i = 1; i < pubVars.historyPath.length; i++) {
+                if (args.x == pubVars.historyPath[i].x && args.y == pubVars.historyPath[i].y) {
+                    console.log('self-collision detected');
                 }
             }
         }
@@ -36,21 +38,13 @@ let helpers = {
         return randH;
     },
     positionLogger(limit, loc) {
-        historyPath.push(loc);
-        if (historyPath.length > limit) {
-            historyPath.shift();
+        pubVars.historyPath.push(loc);
+        if (pubVars.historyPath.length > limit) {
+            pubVars.historyPath.shift();
         }
     }
 }
-function setup() {
-    resolution();
-    input.listen();
-    pubVars.fractions = 16;
-    pubVars.snakeLength = 2;
-    pubVars.snake = new Snake("head");
-    pubVars.food = new Food();
-    loop();
-}
+
 let input = {
     left: false,
     down: false,
@@ -60,30 +54,39 @@ let input = {
         addEventListener(
             "keydown",
             (e) => {
+                console.log(this)
                 switch (e.key) {
                     case "ArrowLeft":
-                        this.left = true;
-                        this.down = false;
-                        this.right = false;
-                        this.up = false;
+                        if (!this.right) {
+                            this.left = true;
+                            this.down = false;
+                            this.right = false;
+                            this.up = false;
+                        }
                         break;
                     case "ArrowRight":
-                        this.left = false;
-                        this.down = false;
-                        this.right = true;
-                        this.up = false;
+                        if (!this.left) {
+                            this.left = false;
+                            this.down = false;
+                            this.right = true;
+                            this.up = false;
+                        }
                         break;
                     case "ArrowUp":
-                        this.left = false;
-                        this.down = false;
-                        this.right = false;
-                        this.up = true;
+                        if (!this.down) {
+                            this.left = false;
+                            this.down = false;
+                            this.right = false;
+                            this.up = true;
+                        }
                         break;
                     case "ArrowDown":
-                        this.left = false;
-                        this.down = true;
-                        this.right = false;
-                        this.up = false;
+                        if (!this.up) {
+                            this.left = false;
+                            this.down = true;
+                            this.right = false;
+                            this.up = false;
+                        }
                         break;
                     default:
                         break;
@@ -96,8 +99,8 @@ let input = {
 
 class Snake {
     constructor(i, type) {
-        this.x = type == "tail" ? historyPath[i].x : 0;
-        this.y = type == "tail" ? historyPath[i].y : 0;
+        this.x = type == "tail" ? pubVars.historyPath[i].x : 0;
+        this.y = type == "tail" ? pubVars.historyPath[i].y : 0;
         this.type = type;
         this.index = i;
         this.delay = 10;
@@ -113,8 +116,8 @@ class Snake {
         this.draw();
         if (this.localDelay < 0) {
             if (this.type == "tail") {
-                this.x = historyPath[this.index].x;
-                this.y = historyPath[this.index].y;
+                this.x = pubVars.historyPath[this.index].x;
+                this.y = pubVars.historyPath[this.index].y;
             } else {
                 this.localDelay = this.delay;
                 if (input.left) {
@@ -181,19 +184,26 @@ class Food extends Snake {
             (Math.floor(Math.random() * pubVars.fractions) * ctx.canvas.height) / pubVars.fractions;
     }
 }
-let historyPath = [];
 
-let tails = [];
-function loop() {
+(function setup() { // Intialization of the game.
+    cnvRes();
+    input.listen();
+    pubVars.fractions = 16;
+    pubVars.snakeLength = 2;
+    pubVars.snake = new Snake("head");
+    pubVars.food = new Food();
+    loop();
+})();
+
+function loop() { // Continuous loop.
     requestAnimationFrame(loop);
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     pubVars.snake.update();
-    if (tails.length) {
-        for (let i = 0; i < tails.length; i++) {
-            tails[i].update();
+    if (pubVars.tails.length) {
+        for (let i = 0; i < pubVars.tails.length; i++) {
+            pubVars.tails[i].update();
         }
     }
     pubVars.food.update();
 }
 
-setup();
