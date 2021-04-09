@@ -6,12 +6,12 @@ function resolution(width = 400, height = 400) {
     ctx.canvas.width = width;
     ctx.canvas.height = height;
 }
-let snake, snakeLength, food;
+let snake, snakeLength, food, currentHue;
 
 function initialize() {
     resolution(600, 600);
     input.listen();
-    snakeLength = 1;
+    snakeLength = 2;
     snake = new Snake('head');
     food = new Food();
     loop();
@@ -19,7 +19,7 @@ function initialize() {
 let input = {
     left: false,
     down: false,
-    right: false,
+    right: true,
     up: false,
     listen() {
         addEventListener('keydown', e => {
@@ -62,6 +62,7 @@ class Snake {
         this.type = type;
         this.index = i;
         this.delay = 10;
+        this.localDelay = 10;
         this.size = ctx.canvas.width / 24;
         this.color = "white";
     }
@@ -71,12 +72,12 @@ class Snake {
     }
     update() {
         this.draw();
-        if (this.delay < 0) {
+        if (this.localDelay < 0) {
             if (this.type == "tail") {
                 this.x = historyPath[this.index].x;
                 this.y = historyPath[this.index].y;
             } else {
-                this.delay = 10;
+                this.localDelay = this.delay;
                 if (input.left) {
                     this.x -= ctx.canvas.width / 24;
                 }
@@ -102,35 +103,48 @@ class Snake {
                 if (this.x < 0) {
                     this.x = ctx.canvas.width - ctx.canvas.width / 24;
                 }
-                collision({ ...this })
+                collision({ ...this });
                 historyKeeper(snakeLength, { x: this.x, y: this.y })
             }
         } else {
-            this.delay--;
+            this.localDelay--;
         }
     }
 
 }
-function collision(snake) {
-    if (snake.x == food.x && snake.y == food.y) {
-        food.newFood();
+function collision(snakeParam) {
+    if (snakeParam.x == food.x && snakeParam.y == food.y) {
+        food.respawnFood();
         tails.push(new Snake(snakeLength - 1, 'tail'))
         snakeLength++;
-        snake.delay - 1;
+        snake.delay - 0.2;
     }
+}
+function randomHue() {
+    let randH = Math.floor(Math.random() * 255);
+    currentHue = randH;
+    return randH;
 }
 class Food extends Snake {
     constructor() {
         super();
         this.x = (Math.floor(Math.random() * 24)) * ctx.canvas.width / 24;
         this.y = (Math.floor(Math.random() * 24)) * ctx.canvas.height / 24;
-        this.color = `hsl(${Math.floor(Math.random() * 200)}, 100%, 50%)`;
+        this.color = `hsl(${randomHue()}, 100%, 80%)`;
+    }
+    draw() {
+        ctx.save()
+        ctx.shadowColor = `hsl(${currentHue}, 100%, 50%)`;
+        ctx.shadowBlur = 50;
+        ctx.fillStyle = this.color;
+        ctx.fillRect(this.x, this.y, this.size, this.size);
+        ctx.restore();
     }
     update() {
         this.draw();
     }
-    newFood() {
-        this.color = `hsl(${Math.floor(Math.random() * 200)}, 100%, 50%)`;
+    respawnFood() {
+        this.color = `hsl(${randomHue()}, 100%, 50%)`;
         this.x = ((Math.floor(Math.random() * 24)) * ctx.canvas.width / 24);
         this.y = ((Math.floor(Math.random() * 24)) * ctx.canvas.height / 24);
     }
