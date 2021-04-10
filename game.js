@@ -1,5 +1,6 @@
 let canvas = document.createElement("canvas");
-document.querySelector("body").appendChild(canvas);
+let score = document.querySelector('#score');
+document.querySelector(".container").appendChild(canvas);
 let ctx = canvas ? canvas.getContext("2d") : null;
 
 function cnvRes(width = 400, height = 400) {
@@ -13,21 +14,22 @@ let pubVars = {
     currentHue: undefined,
     fractions: undefined,
     historyPath: [],
+    gameOver: false,
     tails: [],
 }
 let helpers = {
-    collision(isSelfCol, args) {
+    collision(isSelfCol, snakeHead) {
         if (isSelfCol) {
-            if (args.x == pubVars.food.x && args.y == pubVars.food.y) {
+            if (snakeHead.x == pubVars.food.x && snakeHead.y == pubVars.food.y) {
                 pubVars.food.respawnFood();
                 pubVars.tails.push(new Snake(pubVars.snakeLength - 1, "tail"));
                 pubVars.snakeLength++;
-                pubVars.snake.delay - 0.2;
+                pubVars.snake.delay - 0.5;
             }
         } else {
             for (let i = 1; i < pubVars.historyPath.length; i++) {
-                if (args.x == pubVars.historyPath[i].x && args.y == pubVars.historyPath[i].y) {
-                    console.log('self-collision detected');
+                if (snakeHead.x == pubVars.historyPath[i].x && snakeHead.y == pubVars.historyPath[i].y) {
+                    pubVars.gameOver = true;
                 }
             }
         }
@@ -36,6 +38,19 @@ let helpers = {
         let randH = Math.floor(Math.random() * 255);
         currentHue = randH;
         return randH;
+    },
+    randCor(newCors) {
+        let randX = (Math.floor(Math.random() * pubVars.fractions) * ctx.canvas.width) / pubVars.fractions;
+        let randY = (Math.floor(Math.random() * pubVars.fractions) * ctx.canvas.height) / pubVars.fractions;
+
+        if (newCors) {
+            randX = (Math.floor(Math.random() * pubVars.fractions) * ctx.canvas.width) / pubVars.fractions;
+            randY = (Math.floor(Math.random() * pubVars.fractions) * ctx.canvas.height) / pubVars.fractions;
+            return { randX, randY };
+        } else {
+            return { randX, randY };
+        }
+
     },
     positionLogger(limit, loc) {
         pubVars.historyPath.push(loc);
@@ -54,7 +69,6 @@ let input = {
         addEventListener(
             "keydown",
             (e) => {
-                console.log(this)
                 switch (e.key) {
                     case "ArrowLeft":
                         if (!this.right) {
@@ -155,14 +169,11 @@ class Snake {
     }
 }
 
-
 class Food extends Snake {
     constructor() {
         super();
-        this.x =
-            (Math.floor(Math.random() * pubVars.fractions) * ctx.canvas.width) / pubVars.fractions;
-        this.y =
-            (Math.floor(Math.random() * pubVars.fractions) * ctx.canvas.height) / pubVars.fractions;
+        this.x = (Math.floor(Math.random() * pubVars.fractions) * ctx.canvas.width) / pubVars.fractions;
+        this.y = (Math.floor(Math.random() * pubVars.fractions) * ctx.canvas.height) / pubVars.fractions;
         this.color = `hsl(${helpers.randHue()}, 100%, 80%)`;
     }
     draw() {
@@ -173,37 +184,49 @@ class Food extends Snake {
         ctx.fillRect(this.x, this.y, this.size, this.size);
         ctx.restore();
     }
-    update() {
-        this.draw();
-    }
     respawnFood() {
         this.color = `hsl(${helpers.randHue()}, 100%, 50%)`;
-        this.x =
-            (Math.floor(Math.random() * pubVars.fractions) * ctx.canvas.width) / pubVars.fractions;
-        this.y =
-            (Math.floor(Math.random() * pubVars.fractions) * ctx.canvas.height) / pubVars.fractions;
+        this.x = (Math.floor(Math.random() * pubVars.fractions) * ctx.canvas.width) / pubVars.fractions;
+        this.y = (Math.floor(Math.random() * pubVars.fractions) * ctx.canvas.height) / pubVars.fractions;
+        for (let i = 0; i < pubVars.historyPath.length; i++) {
+            if (this.x == pubVars.historyPath[i].x && this.y == pubVars.historyPath[i].y) {
+                this.respawnFood();
+            }
+        }
+
     }
 }
+function scoreManager() {
+    let currentScore = pubVars.snakeLength - 1;
+    score.innerText = currentScore.toString();
+}
 
-(function setup() { // Intialization of the game.
+function setup() { // Intialization of the game.
     cnvRes();
     input.listen();
-    pubVars.fractions = 16;
-    pubVars.snakeLength = 2;
+    pubVars.fractions = 32;
+    pubVars.snakeLength = 1;
     pubVars.snake = new Snake("head");
     pubVars.food = new Food();
     loop();
-})();
+};
+setup();
 
-function loop() { // Continuous loop.
-    requestAnimationFrame(loop);
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    pubVars.snake.update();
-    if (pubVars.tails.length) {
-        for (let i = 0; i < pubVars.tails.length; i++) {
-            pubVars.tails[i].update();
+function loop() {// Continuous loop.]
+    if (!pubVars.gameOver) {
+        requestAnimationFrame(loop);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        pubVars.snake.update();
+        if (pubVars.tails.length) {
+            for (let i = 0; i < pubVars.tails.length; i++) {
+                pubVars.tails[i].update();
+            }
         }
+        pubVars.food.draw();
+        scoreManager();
     }
-    pubVars.food.update();
-}
+};
 
+window.addEventListener('click', () => {
+    console.log(pubVars.snake.delay, pubVars.snake.localDelay)
+});
