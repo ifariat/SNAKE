@@ -18,7 +18,7 @@ let pubVars = {
     gameOver: false,
     tails: [],
     update: undefined,
-    maxScore: undefined
+    maxScore: window.localStorage.getItem('maxScore') || undefined
 }
 let helpers = {
     collision(isSelfCol, snakeHead) {
@@ -126,7 +126,10 @@ class Snake {
         this.color = "white";
     }
     draw() {
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = "#2b2d33";
         ctx.fillStyle = this.color;
+        ctx.strokeRect(this.x, this.y, this.size, this.size);
         ctx.fillRect(this.x, this.y, this.size, this.size);
     }
     update() {
@@ -181,9 +184,12 @@ class Food extends Snake {
     }
     draw() {
         ctx.save();
+        ctx.lineWidth = 1;
         ctx.shadowColor = `hsl(${currentHue}, 100%, 50%)`;
         ctx.shadowBlur = 50;
         ctx.fillStyle = this.color;
+        ctx.strokeStyle = `hsl(${currentHue}, 100%, 80%)`
+        ctx.strokeRect(this.x, this.y, this.size, this.size);
         ctx.fillRect(this.x, this.y, this.size, this.size);
         ctx.restore();
     }
@@ -238,14 +244,16 @@ replay.addEventListener('click', () => {
     reset();
 });
 function gameOver() {
+    pubVars.maxScore ? null : pubVars.maxScore = pubVars.snakeLength - 1;
     pubVars.snakeLength - 1 > pubVars.maxScore ? pubVars.maxScore = pubVars.snakeLength - 1 : null;
+    window.localStorage.setItem('maxScore', pubVars.maxScore)
     ctx.fillStyle = "#4cffd7";
     ctx.textAlign = "center";
     ctx.font = "bold 30px Poppins, sans-serif";
     ctx.fillText("GAME OVER", ctx.canvas.width / 2, ctx.canvas.height / 2);
     ctx.font = "15px Poppins, sans-serif";
     ctx.fillText(`SCORE   ${pubVars.snakeLength - 1}`, ctx.canvas.width / 2, ctx.canvas.height / 2 + 60);
-    ctx.fillText(`MAXSCORE   ${pubVars.snakeLength - 1}`, ctx.canvas.width / 2, ctx.canvas.height / 2 + 80);
+    ctx.fillText(`MAXSCORE   ${pubVars.maxScore}`, ctx.canvas.width / 2, ctx.canvas.height / 2 + 80);
 }
 function reset() {
     clearInterval(pubVars.update);
@@ -264,3 +272,4 @@ function reset() {
     input.up = false;
     setup();
 }
+
