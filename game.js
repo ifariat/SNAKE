@@ -239,6 +239,7 @@ replay.addEventListener('click', () => {
 });
 function gameOver() {
     pubVars.snakeLength - 1 > pubVars.maxScore ? pubVars.maxScore = pubVars.snakeLength - 1 : null;
+    ctx.fillStyle = "#4cffd7";
     ctx.textAlign = "center";
     ctx.font = "bold 30px Poppins, sans-serif";
     ctx.fillText("GAME OVER", ctx.canvas.width / 2, ctx.canvas.height / 2);
