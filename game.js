@@ -272,4 +272,3 @@ function reset() {
     input.up = false;
     setup();
 }
-
