@@ -248,17 +248,15 @@ function gameOver() {
 }
 function reset() {
     clearInterval(pubVars.update);
-    pubVars = {
-        snake: undefined,
-        snakeLength: undefined,
-        food: undefined,
-        currentHue: undefined,
-        fractions: undefined,
-        historyPath: [],
-        gameOver: false,
-        tails: [],
-        update: undefined,
-    }
+    pubVars.snake = undefined;
+    pubVars.snakeLength = undefined;
+    pubVars.food = undefined;
+    pubVars.currentHue = undefined;
+    pubVars.fractions = undefined;
+    pubVars.historyPath = [];
+    pubVars.gameOver = false;
+    pubVars.tails = [];
+    pubVars.update = undefined;
     input.left = false;
     input.down = false;
     input.right = true;
