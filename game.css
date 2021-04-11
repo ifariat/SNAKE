@@ -1,11 +1,20 @@
+@font-face {
+    font-family: 'game';
+    src: url('https://fonts.googleapis.com/css2?family=Poppins:wght@500;800&display=swap');
+}
 * {
     padding: 0;
     margin: 0;
     box-sizing: border-box;
 }
+button:focus {
+    outline:0;
+}
+
 html,body {
     height: 100%;
     font-family: 'Poppins', sans-serif;
+    color: #7a7f8b;
 }
 body {
     background-color: #3e4149;
@@ -25,10 +34,9 @@ background-color: #2b2d33;
     align-items: center;
 }
 #ui {
-    color: #7a7f8b;
     display: flex;
     align-items: center;
-    font-size: 12px;
+    font-size: 10px;
     flex-flow: column;
 }
 h2 {
@@ -39,4 +47,27 @@ h2 {
     margin-top: 20px;
     font-size: 30px;
     font-weight: 800;
+}
+.noselect {
+        user-select: none; 
+}
+#replay {
+    font-size: 10px;
+    padding: 10px 20px;
+    background: #7a7f8b;
+    border: none;
+    color: #3e4149;
+    border-radius: 20px;
+    font-weight: 800;
+    transform: rotate(270deg);
+    cursor: pointer;
+    transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+#replay:hover {
+    background: #a6aab5;
+    background:#4cffd7;
+	transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+#replay svg {
+    margin-right: 8px;
 }

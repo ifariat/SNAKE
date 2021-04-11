@@ -1,6 +1,7 @@
-let canvas = document.createElement("canvas");
+let replay = document.querySelector('#replay');
 let score = document.querySelector('#score');
-document.querySelector(".container").appendChild(canvas);
+let canvas = document.createElement("canvas");
+document.querySelector("#canvas").appendChild(canvas);
 let ctx = canvas ? canvas.getContext("2d") : null;
 
 function cnvRes(width = 400, height = 400) {
@@ -16,6 +17,8 @@ let pubVars = {
     historyPath: [],
     gameOver: false,
     tails: [],
+    update: undefined,
+    maxScore: undefined
 }
 let helpers = {
     collision(isSelfCol, snakeHead) {
@@ -174,7 +177,7 @@ class Food extends Snake {
         super();
         this.x = (Math.floor(Math.random() * pubVars.fractions) * ctx.canvas.width) / pubVars.fractions;
         this.y = (Math.floor(Math.random() * pubVars.fractions) * ctx.canvas.height) / pubVars.fractions;
-        this.color = `hsl(${helpers.randHue()}, 100%, 80%)`;
+        this.color = `hsl(${helpers.randHue()}, 100%, 55%)`;
     }
     draw() {
         ctx.save();
@@ -210,23 +213,55 @@ function setup() { // Intialization of the game.
     pubVars.food = new Food();
     loop();
 };
+
+function loop() {
+    pubVars.update = setInterval(() => {
+        if (!pubVars.gameOver) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            pubVars.snake.update();
+            if (pubVars.tails.length) {
+                for (let i = 0; i < pubVars.tails.length; i++) {
+                    pubVars.tails[i].update();
+                }
+            }
+            pubVars.food.draw();
+            scoreManager();
+        } else {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            gameOver();
+        }
+    }, 1000 / 60)
+}
 setup();
 
-function loop() {// Continuous loop.]
-    if (!pubVars.gameOver) {
-        requestAnimationFrame(loop);
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        pubVars.snake.update();
-        if (pubVars.tails.length) {
-            for (let i = 0; i < pubVars.tails.length; i++) {
-                pubVars.tails[i].update();
-            }
-        }
-        pubVars.food.draw();
-        scoreManager();
-    }
-};
-
-window.addEventListener('click', () => {
-    console.log(pubVars.snake.delay, pubVars.snake.localDelay)
+replay.addEventListener('click', () => {
+    reset();
 });
+function gameOver() {
+    pubVars.snakeLength - 1 > pubVars.maxScore ? pubVars.maxScore = pubVars.snakeLength - 1 : null;
+    ctx.textAlign = "center";
+    ctx.font = "bold 30px Poppins, sans-serif";
+    ctx.fillText("GAME OVER", ctx.canvas.width / 2, ctx.canvas.height / 2);
+    ctx.font = "15px Poppins, sans-serif";
+    ctx.fillText(`SCORE   ${pubVars.snakeLength - 1}`, ctx.canvas.width / 2, ctx.canvas.height / 2 + 60);
+    ctx.fillText(`MAXSCORE   ${pubVars.snakeLength - 1}`, ctx.canvas.width / 2, ctx.canvas.height / 2 + 80);
+}
+function reset() {
+    clearInterval(pubVars.update);
+    pubVars = {
+        snake: undefined,
+        snakeLength: undefined,
+        food: undefined,
+        currentHue: undefined,
+        fractions: undefined,
+        historyPath: [],
+        gameOver: false,
+        tails: [],
+        update: undefined,
+    }
+    input.left = false;
+    input.down = false;
+    input.right = true;
+    input.up = false;
+    setup();
+}
