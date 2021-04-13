@@ -261,20 +261,21 @@ class Effect {
     draw() {
         let hsl = this.color.split('').filter(l => l.match(/[^hsl()$% ]/g)).join('').split(',').map(n => +n);
         let [r, g, b] = helpers.hsl2rgb(hsl[0], hsl[1] / 100, hsl[2] / 100);
-        ctx.save();
-        ctx.translate(this.size / 2 + this.x, this.size / 2 + this.y);
+        ctx.translate(this.x, this.y);
         ctx.rotate(this.angle * Math.PI / 180.0);
         ctx.lineWidth = 2;
         ctx.strokeStyle = `rgb(${r},${g},${b},${1 / this.ttl})`;
         ctx.strokeRect(-this.size / 2, -this.size / 2, this.size, this.size);
-        ctx.restore();
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
     }
     update() {
         this.draw();
         if (this.size > 0) {
-            this.y -= 1;
             this.ttl >= 40 ? pubVars.effects.splice(this.i + 1, 1) : this.ttl += 0.5;
-            this.angle += 7;
+            this.angle += 5;
+            this.size += 1;
+        } else {
+            this.size = 10;
         }
     }
 }
