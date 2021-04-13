@@ -18,7 +18,8 @@ let pubVars = {
     gameOver: false,
     tails: [],
     update: undefined,
-    maxScore: window.localStorage.getItem('maxScore') || undefined
+    maxScore: window.localStorage.getItem('maxScore') || undefined,
+    effects: []
 }
 let helpers = {
     collision(isSelfCol, snakeHead) {
@@ -38,9 +39,7 @@ let helpers = {
         }
     },
     randHue() {
-        let randH = Math.floor(Math.random() * 255);
-        currentHue = randH;
-        return randH;
+        return Math.floor(Math.random() * 360);
     },
     randCor(newCors) {
         let randX = (Math.floor(Math.random() * pubVars.fractions) * ctx.canvas.width) / pubVars.fractions;
@@ -60,8 +59,56 @@ let helpers = {
         if (pubVars.historyPath.length > limit) {
             pubVars.historyPath.shift();
         }
+    },
+    hsl2rgb(hue, saturation, lightness) {
+        // based on algorithm from http://en.wikipedia.org/wiki/HSL_and_HSV#Converting_to_RGB
+        if (hue == undefined) {
+            return [0, 0, 0];
+        }
+
+        var chroma = (1 - Math.abs((2 * lightness) - 1)) * saturation;
+        var huePrime = hue / 60;
+        var secondComponent = chroma * (1 - Math.abs((huePrime % 2) - 1));
+
+        huePrime = Math.floor(huePrime);
+        var red;
+        var green;
+        var blue;
+
+        if (huePrime === 0) {
+            red = chroma;
+            green = secondComponent;
+            blue = 0;
+        } else if (huePrime === 1) {
+            red = secondComponent;
+            green = chroma;
+            blue = 0;
+        } else if (huePrime === 2) {
+            red = 0;
+            green = chroma;
+            blue = secondComponent;
+        } else if (huePrime === 3) {
+            red = 0;
+            green = secondComponent;
+            blue = chroma;
+        } else if (huePrime === 4) {
+            red = secondComponent;
+            green = 0;
+            blue = chroma;
+        } else if (huePrime === 5) {
+            red = chroma;
+            green = 0;
+            blue = secondComponent;
+        }
+
+        var lightnessAdjustment = lightness - (chroma / 2);
+        red += lightnessAdjustment;
+        green += lightnessAdjustment;
+        blue += lightnessAdjustment;
+
+        return [Math.round(red * 255), Math.round(green * 255), Math.round(blue * 255)];
     }
-}
+};
 
 let input = {
     left: false,
@@ -127,9 +174,7 @@ class Snake {
     }
     draw() {
         ctx.lineWidth = 1;
-        ctx.strokeStyle = "#2b2d33";
         ctx.fillStyle = this.color;
-        ctx.strokeRect(this.x, this.y, this.size, this.size);
         ctx.fillRect(this.x, this.y, this.size, this.size);
     }
     update() {
@@ -180,21 +225,19 @@ class Food extends Snake {
         super();
         this.x = (Math.floor(Math.random() * pubVars.fractions) * ctx.canvas.width) / pubVars.fractions;
         this.y = (Math.floor(Math.random() * pubVars.fractions) * ctx.canvas.height) / pubVars.fractions;
-        this.color = `hsl(${helpers.randHue()}, 100%, 55%)`;
+        this.color = pubVars.currentHue = `hsl(${helpers.randHue()}, 100%, 55%)`;
     }
     draw() {
         ctx.save();
-        ctx.lineWidth = 1;
-        ctx.shadowColor = `hsl(${currentHue}, 100%, 50%)`;
+        ctx.shadowColor = this.color;
         ctx.shadowBlur = 50;
         ctx.fillStyle = this.color;
-        ctx.strokeStyle = `hsl(${currentHue}, 100%, 80%)`
-        ctx.strokeRect(this.x, this.y, this.size, this.size);
         ctx.fillRect(this.x, this.y, this.size, this.size);
         ctx.restore();
     }
     respawnFood() {
-        this.color = `hsl(${helpers.randHue()}, 100%, 50%)`;
+        pubVars.effects.push(new Effect(pubVars.food.x, pubVars.food.y, pubVars.currentHue, pubVars.food.size, pubVars.effects.length - 1));
+        this.color = pubVars.currentHue = `hsl(${helpers.randHue()}, 100%, 50%)`;
         this.x = (Math.floor(Math.random() * pubVars.fractions) * ctx.canvas.width) / pubVars.fractions;
         this.y = (Math.floor(Math.random() * pubVars.fractions) * ctx.canvas.height) / pubVars.fractions;
         for (let i = 0; i < pubVars.historyPath.length; i++) {
@@ -202,7 +245,37 @@ class Food extends Snake {
                 this.respawnFood();
             }
         }
+    }
+}
 
+class Effect {
+    constructor(x, y, color, size, i) {
+        this.x = x;
+        this.y = y;
+        this.color = color;
+        this.size = size;
+        this.ttl = 0;
+        this.angle = 1;
+        this.index = i;
+    }
+    draw() {
+        let hsl = this.color.split('').filter(l => l.match(/[^hsl()$% ]/g)).join('').split(',').map(n => +n);
+        let [r, g, b] = helpers.hsl2rgb(hsl[0], hsl[1] / 100, hsl[2] / 100);
+        ctx.save();
+        ctx.translate(this.size / 2 + this.x, this.size / 2 + this.y);
+        ctx.rotate(this.angle * Math.PI / 180.0);
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = `rgb(${r},${g},${b},${1 / this.ttl})`;
+        ctx.strokeRect(-this.size / 2, -this.size / 2, this.size, this.size);
+        ctx.restore();
+    }
+    update() {
+        this.draw();
+        if (this.size > 0) {
+            this.y -= 1;
+            this.ttl >= 40 ? pubVars.effects.splice(this.i + 1, 1) : this.ttl += 0.5;
+            this.angle += 7;
+        }
     }
 }
 function scoreManager() {
@@ -232,6 +305,9 @@ function loop() {
             }
             pubVars.food.draw();
             scoreManager();
+            for (let i = 0; i < pubVars.effects.length; i++) {
+                pubVars.effects[i].update();
+            }
         } else {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             gameOver();
