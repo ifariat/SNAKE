@@ -273,7 +273,7 @@ class Effect {
         if (this.size > 0) {
             this.ttl >= 40 ? pubVars.effects.splice(this.i + 1, 1) : this.ttl += 0.5;
             this.angle += 5;
-            this.size += 1;
+            this.size += 0.5;
         } else {
             this.size = 10;
         }
