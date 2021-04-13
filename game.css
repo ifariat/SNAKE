@@ -22,6 +22,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
+    color: #6e7888;
   }
   canvas {
     background-color: #181825;
@@ -39,6 +40,7 @@
     align-items: center;
     font-size: 10px;
     flex-flow: column;
+    margin-left: 10px;
   }
   h2 {
     font-weight: 200;
@@ -73,14 +75,40 @@
     margin-right: 8px;
   }
   @media (max-width:480px) {
+      #replay {
+          margin-bottom: 20px;
+      }
     #replay, h2 {
         transform: rotate(0deg);
     }
     #ui {
         flex-flow: row wrap;
+        margin-bottom: 20px
     }
     #score {
         margin-top: 0;
         margin-left: 20px
     }
+    .container {
+        flex-flow: column wrap;
+    }
   }
+#credit {
+    width: 100%;
+    bottom: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    color: inherit;
+    text-transform: uppercase;
+}
+#credit span {
+    font-size: 10px;
+    margin-left: 20px;
+    color: inherit;
+    letter-spacing: 4px;
+}
+#credit h1{
+    font-size: 25px;
+}

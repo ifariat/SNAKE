@@ -175,6 +175,8 @@ class Snake {
     draw() {
         ctx.lineWidth = 1;
         ctx.fillStyle = this.color;
+        ctx.strokeStyle = "#181825";
+        ctx.strokeRect(this.x, this.y, this.size, this.size);
         ctx.fillRect(this.x, this.y, this.size, this.size);
     }
     update() {
@@ -197,7 +199,6 @@ class Snake {
                 if (input.down) {
                     this.y += ctx.canvas.width / pubVars.fractions;
                 }
-                // bounding box =>
                 if (this.x + ctx.canvas.width / pubVars.fractions > ctx.canvas.width) {
                     this.x = 0;
                 }
