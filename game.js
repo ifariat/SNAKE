@@ -61,7 +61,6 @@ let helpers = {
         }
     },
     hsl2rgb(hue, saturation, lightness) {
-        // based on algorithm from http://en.wikipedia.org/wiki/HSL_and_HSV#Converting_to_RGB
         if (hue == undefined) {
             return [0, 0, 0];
         }
