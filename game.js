@@ -13,7 +13,7 @@ let pubVars = {
     snakeLength: undefined,
     food: undefined,
     currentHue: undefined,
-    fractions: undefined,
+    segments: undefined,
     historyPath: [],
     gameOver: false,
     tails: [],
@@ -42,12 +42,12 @@ let helpers = {
         return Math.floor(Math.random() * 360);
     },
     randCor(newCors) {
-        let randX = (Math.floor(Math.random() * pubVars.fractions) * ctx.canvas.width) / pubVars.fractions;
-        let randY = (Math.floor(Math.random() * pubVars.fractions) * ctx.canvas.height) / pubVars.fractions;
+        let randX = (Math.floor(Math.random() * pubVars.segments) * ctx.canvas.width) / pubVars.segments;
+        let randY = (Math.floor(Math.random() * pubVars.segments) * ctx.canvas.height) / pubVars.segments;
 
         if (newCors) {
-            randX = (Math.floor(Math.random() * pubVars.fractions) * ctx.canvas.width) / pubVars.fractions;
-            randY = (Math.floor(Math.random() * pubVars.fractions) * ctx.canvas.height) / pubVars.fractions;
+            randX = (Math.floor(Math.random() * pubVars.segments) * ctx.canvas.width) / pubVars.segments;
+            randY = (Math.floor(Math.random() * pubVars.segments) * ctx.canvas.height) / pubVars.segments;
             return { randX, randY };
         } else {
             return { randX, randY };
@@ -168,7 +168,7 @@ class Snake {
         this.index = i;
         this.delay = 10;
         this.localDelay = 10;
-        this.size = ctx.canvas.width / pubVars.fractions;
+        this.size = ctx.canvas.width / pubVars.segments;
         this.color = "white";
     }
     draw() {
@@ -187,28 +187,28 @@ class Snake {
             } else {
                 this.localDelay = this.delay;
                 if (input.left) {
-                    this.x -= ctx.canvas.width / pubVars.fractions;
+                    this.x -= ctx.canvas.width / pubVars.segments;
                 }
                 if (input.right) {
-                    this.x += ctx.canvas.width / pubVars.fractions;
+                    this.x += ctx.canvas.width / pubVars.segments;
                 }
                 if (input.up) {
-                    this.y -= ctx.canvas.width / pubVars.fractions;
+                    this.y -= ctx.canvas.width / pubVars.segments;
                 }
                 if (input.down) {
-                    this.y += ctx.canvas.width / pubVars.fractions;
+                    this.y += ctx.canvas.width / pubVars.segments;
                 }
-                if (this.x + ctx.canvas.width / pubVars.fractions > ctx.canvas.width) {
+                if (this.x + ctx.canvas.width / pubVars.segments > ctx.canvas.width) {
                     this.x = 0;
                 }
-                if (this.y + ctx.canvas.height / pubVars.fractions > ctx.canvas.width) {
+                if (this.y + ctx.canvas.height / pubVars.segments > ctx.canvas.width) {
                     this.y = 0;
                 }
                 if (this.y < 0) {
-                    this.y = ctx.canvas.height - ctx.canvas.height / pubVars.fractions;
+                    this.y = ctx.canvas.height - ctx.canvas.height / pubVars.segments;
                 }
                 if (this.x < 0) {
-                    this.x = ctx.canvas.width - ctx.canvas.width / pubVars.fractions;
+                    this.x = ctx.canvas.width - ctx.canvas.width / pubVars.segments;
                 }
                 helpers.collision(true, { ...this });
                 helpers.collision(false, { ...this });
@@ -223,8 +223,8 @@ class Snake {
 class Food extends Snake {
     constructor() {
         super();
-        this.x = (Math.floor(Math.random() * pubVars.fractions) * ctx.canvas.width) / pubVars.fractions;
-        this.y = (Math.floor(Math.random() * pubVars.fractions) * ctx.canvas.height) / pubVars.fractions;
+        this.x = (Math.floor(Math.random() * pubVars.segments) * ctx.canvas.width) / pubVars.segments;
+        this.y = (Math.floor(Math.random() * pubVars.segments) * ctx.canvas.height) / pubVars.segments;
         this.color = pubVars.currentHue = `hsl(${helpers.randHue()}, 100%, 55%)`;
     }
     draw() {
@@ -238,8 +238,8 @@ class Food extends Snake {
     respawnFood() {
         pubVars.effects.push(new Effect(pubVars.food.x, pubVars.food.y, pubVars.currentHue, pubVars.food.size, pubVars.effects.length - 1));
         this.color = pubVars.currentHue = `hsl(${helpers.randHue()}, 100%, 50%)`;
-        this.x = (Math.floor(Math.random() * pubVars.fractions) * ctx.canvas.width) / pubVars.fractions;
-        this.y = (Math.floor(Math.random() * pubVars.fractions) * ctx.canvas.height) / pubVars.fractions;
+        this.x = (Math.floor(Math.random() * pubVars.segments) * ctx.canvas.width) / pubVars.segments;
+        this.y = (Math.floor(Math.random() * pubVars.segments) * ctx.canvas.height) / pubVars.segments;
         for (let i = 0; i < pubVars.historyPath.length; i++) {
             if (this.x == pubVars.historyPath[i].x && this.y == pubVars.historyPath[i].y) {
                 this.respawnFood();
@@ -287,7 +287,7 @@ function scoreManager() {
 function setup() { // Intialization of the game.
     cnvRes();
     input.listen();
-    pubVars.fractions = 32;
+    pubVars.segments = 32;
     pubVars.snakeLength = 1;
     pubVars.snake = new Snake("head");
     pubVars.food = new Food();
@@ -338,7 +338,7 @@ function reset() {
     pubVars.snakeLength = undefined;
     pubVars.food = undefined;
     pubVars.currentHue = undefined;
-    pubVars.fractions = undefined;
+    pubVars.segments = undefined;
     pubVars.historyPath = [];
     pubVars.gameOver = false;
     pubVars.tails = [];
