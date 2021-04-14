@@ -74,7 +74,26 @@ h2 {
 #replay svg {
   margin-right: 8px;
 }
-
+@media (max-width: 600px) {
+  #replay {
+    margin-bottom: 20px;
+  }
+  #replay,
+  h2 {
+    transform: rotate(0deg);
+  }
+  #ui {
+    flex-flow: row wrap;
+    margin-bottom: 20px;
+  }
+  #score {
+    margin-top: 0;
+    margin-left: 20px;
+  }
+  .container {
+    flex-flow: column wrap;
+  }
+}
 #credit {
   width: 100%;
   bottom: 40px;
@@ -84,6 +103,7 @@ h2 {
   font-weight: 600;
   color: inherit;
   text-transform: uppercase;
+  padding-left: 35px;
 }
 #credit span {
   font-size: 10px;
@@ -91,7 +111,7 @@ h2 {
   color: inherit;
   letter-spacing: 4px;
 }
-#credit h1{
+#credit h1 {
   font-size: 25px;
 }
 .wrapper {
@@ -100,23 +120,4 @@ h2 {
   justify-content: center;
   align-items: center;
   margin-bottom: 20px;
-}
-@media (max-width:480px) {
-  #replay {
-      margin-bottom: 20px;
-  }
-#replay, h2 {
-    transform: rotate(0deg);
-}
-#ui {
-    flex-flow: row wrap;
-    margin-bottom: 20px
-}
-#score {
-    margin-top: 0;
-    margin-left: 20px
-}
-.container {
-    flex-flow: column wrap;
-}
 }

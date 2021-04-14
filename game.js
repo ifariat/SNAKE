@@ -8,7 +8,7 @@ function cnvRes(width = 400, height = 400) {
     ctx.canvas.width = width;
     ctx.canvas.height = height;
 }
-let pubVars = {
+let _vars = {
     snake: undefined,
     snakeLength: undefined,
     food: undefined,
@@ -21,19 +21,19 @@ let pubVars = {
     maxScore: window.localStorage.getItem('maxScore') || undefined,
     effects: []
 }
-let helpers = {
+let _helpers = {
     collision(isSelfCol, snakeHead) {
         if (isSelfCol) {
-            if (snakeHead.x == pubVars.food.x && snakeHead.y == pubVars.food.y) {
-                pubVars.food.respawnFood();
-                pubVars.tails.push(new Snake(pubVars.snakeLength - 1, "tail"));
-                pubVars.snakeLength++;
-                pubVars.snake.delay - 0.5;
+            if (snakeHead.x == _vars.food.x && snakeHead.y == _vars.food.y) {
+                _vars.food.respawnFood();
+                _vars.tails.push(new Snake(_vars.snakeLength - 1, "tail"));
+                _vars.snakeLength++;
+                _vars.snake.delay - 0.5;
             }
         } else {
-            for (let i = 1; i < pubVars.historyPath.length; i++) {
-                if (snakeHead.x == pubVars.historyPath[i].x && snakeHead.y == pubVars.historyPath[i].y) {
-                    pubVars.gameOver = true;
+            for (let i = 1; i < _vars.historyPath.length; i++) {
+                if (snakeHead.x == _vars.historyPath[i].x && snakeHead.y == _vars.historyPath[i].y) {
+                    _vars.gameOver = true;
                 }
             }
         }
@@ -42,12 +42,12 @@ let helpers = {
         return Math.floor(Math.random() * 360);
     },
     randCor(newCors) {
-        let randX = (Math.floor(Math.random() * pubVars.segments) * ctx.canvas.width) / pubVars.segments;
-        let randY = (Math.floor(Math.random() * pubVars.segments) * ctx.canvas.height) / pubVars.segments;
+        let randX = (Math.floor(Math.random() * _vars.segments) * ctx.canvas.width) / _vars.segments;
+        let randY = (Math.floor(Math.random() * _vars.segments) * ctx.canvas.height) / _vars.segments;
 
         if (newCors) {
-            randX = (Math.floor(Math.random() * pubVars.segments) * ctx.canvas.width) / pubVars.segments;
-            randY = (Math.floor(Math.random() * pubVars.segments) * ctx.canvas.height) / pubVars.segments;
+            randX = (Math.floor(Math.random() * _vars.segments) * ctx.canvas.width) / _vars.segments;
+            randY = (Math.floor(Math.random() * _vars.segments) * ctx.canvas.height) / _vars.segments;
             return { randX, randY };
         } else {
             return { randX, randY };
@@ -55,9 +55,9 @@ let helpers = {
 
     },
     positionLogger(limit, loc) {
-        pubVars.historyPath.push(loc);
-        if (pubVars.historyPath.length > limit) {
-            pubVars.historyPath.shift();
+        _vars.historyPath.push(loc);
+        if (_vars.historyPath.length > limit) {
+            _vars.historyPath.shift();
         }
     },
     hsl2rgb(hue, saturation, lightness) {
@@ -106,10 +106,13 @@ let helpers = {
         blue += lightnessAdjustment;
 
         return [Math.round(red * 255), Math.round(green * 255), Math.round(blue * 255)];
+    },
+    lerp(start, end, t) {
+        return start * (1 - t) + end * t;
     }
 };
 
-let input = {
+let _input = {
     left: false,
     down: false,
     right: true,
@@ -162,13 +165,13 @@ let input = {
 
 class Snake {
     constructor(i, type) {
-        this.x = type == "tail" ? pubVars.historyPath[i].x : 0;
-        this.y = type == "tail" ? pubVars.historyPath[i].y : 0;
+        this.x = type == "tail" ? _vars.historyPath[i].x : 0;
+        this.y = type == "tail" ? _vars.historyPath[i].y : 0;
         this.type = type;
         this.index = i;
         this.delay = 10;
         this.localDelay = 10;
-        this.size = ctx.canvas.width / pubVars.segments;
+        this.size = ctx.canvas.width / _vars.segments;
         this.color = "white";
     }
     draw() {
@@ -182,37 +185,37 @@ class Snake {
         this.draw();
         if (this.localDelay < 0) {
             if (this.type == "tail") {
-                this.x = pubVars.historyPath[this.index].x;
-                this.y = pubVars.historyPath[this.index].y;
+                this.x = _vars.historyPath[this.index].x;
+                this.y = _vars.historyPath[this.index].y;
             } else {
                 this.localDelay = this.delay;
-                if (input.left) {
-                    this.x -= ctx.canvas.width / pubVars.segments;
+                if (_input.left) {
+                    this.x -= ctx.canvas.width / _vars.segments;
                 }
-                if (input.right) {
-                    this.x += ctx.canvas.width / pubVars.segments;
+                if (_input.right) {
+                    this.x += ctx.canvas.width / _vars.segments;
                 }
-                if (input.up) {
-                    this.y -= ctx.canvas.width / pubVars.segments;
+                if (_input.up) {
+                    this.y -= ctx.canvas.width / _vars.segments;
                 }
-                if (input.down) {
-                    this.y += ctx.canvas.width / pubVars.segments;
+                if (_input.down) {
+                    this.y += ctx.canvas.width / _vars.segments;
                 }
-                if (this.x + ctx.canvas.width / pubVars.segments > ctx.canvas.width) {
+                if (this.x + ctx.canvas.width / _vars.segments > ctx.canvas.width) {
                     this.x = 0;
                 }
-                if (this.y + ctx.canvas.height / pubVars.segments > ctx.canvas.width) {
+                if (this.y + ctx.canvas.height / _vars.segments > ctx.canvas.width) {
                     this.y = 0;
                 }
                 if (this.y < 0) {
-                    this.y = ctx.canvas.height - ctx.canvas.height / pubVars.segments;
+                    this.y = ctx.canvas.height - ctx.canvas.height / _vars.segments;
                 }
                 if (this.x < 0) {
-                    this.x = ctx.canvas.width - ctx.canvas.width / pubVars.segments;
+                    this.x = ctx.canvas.width - ctx.canvas.width / _vars.segments;
                 }
-                helpers.collision(true, { ...this });
-                helpers.collision(false, { ...this });
-                helpers.positionLogger(pubVars.snakeLength, { x: this.x, y: this.y });
+                _helpers.collision(true, { ...this });
+                _helpers.collision(false, { ...this });
+                _helpers.positionLogger(_vars.snakeLength, { x: this.x, y: this.y });
             }
         } else {
             this.localDelay--;
@@ -223,9 +226,9 @@ class Snake {
 class Food extends Snake {
     constructor() {
         super();
-        this.x = (Math.floor(Math.random() * pubVars.segments) * ctx.canvas.width) / pubVars.segments;
-        this.y = (Math.floor(Math.random() * pubVars.segments) * ctx.canvas.height) / pubVars.segments;
-        this.color = pubVars.currentHue = `hsl(${helpers.randHue()}, 100%, 55%)`;
+        this.x = (Math.floor(Math.random() * _vars.segments) * ctx.canvas.width) / _vars.segments;
+        this.y = (Math.floor(Math.random() * _vars.segments) * ctx.canvas.height) / _vars.segments;
+        this.color = _vars.currentHue = `hsl(${_helpers.randHue()}, 100%, 55%)`;
     }
     draw() {
         ctx.save();
@@ -236,12 +239,12 @@ class Food extends Snake {
         ctx.restore();
     }
     respawnFood() {
-        pubVars.effects.push(new Effect(pubVars.food.x, pubVars.food.y, pubVars.currentHue, pubVars.food.size, pubVars.effects.length - 1));
-        this.color = pubVars.currentHue = `hsl(${helpers.randHue()}, 100%, 50%)`;
-        this.x = (Math.floor(Math.random() * pubVars.segments) * ctx.canvas.width) / pubVars.segments;
-        this.y = (Math.floor(Math.random() * pubVars.segments) * ctx.canvas.height) / pubVars.segments;
-        for (let i = 0; i < pubVars.historyPath.length; i++) {
-            if (this.x == pubVars.historyPath[i].x && this.y == pubVars.historyPath[i].y) {
+        _vars.effects.push(new Effect(_vars.food.x, _vars.food.y, _vars.currentHue, _vars.food.size, _vars.effects.length - 1));
+        this.color = _vars.currentHue = `hsl(${_helpers.randHue()}, 100%, 50%)`;
+        this.x = (Math.floor(Math.random() * _vars.segments) * ctx.canvas.width) / _vars.segments;
+        this.y = (Math.floor(Math.random() * _vars.segments) * ctx.canvas.height) / _vars.segments;
+        for (let i = 0; i < _vars.historyPath.length; i++) {
+            if (this.x == _vars.historyPath[i].x && this.y == _vars.historyPath[i].y) {
                 this.respawnFood();
             }
         }
@@ -260,54 +263,56 @@ class Effect {
     }
     draw() {
         let hsl = this.color.split('').filter(l => l.match(/[^hsl()$% ]/g)).join('').split(',').map(n => +n);
-        let [r, g, b] = helpers.hsl2rgb(hsl[0], hsl[1] / 100, hsl[2] / 100);
-        ctx.translate(this.x, this.y);
-        ctx.rotate(this.angle * Math.PI / 180.0);
+        let [r, g, b] = _helpers.hsl2rgb(hsl[0], hsl[1] / 100, hsl[2] / 100);
         ctx.lineWidth = 2;
         ctx.strokeStyle = `rgb(${r},${g},${b},${1 / this.ttl})`;
+        ctx.save();
+        ctx.translate(this.x + this.size / 2, this.y + this.size / 2)
+        ctx.rotate(this.angle * Math.PI / 180.0);
         ctx.strokeRect(-this.size / 2, -this.size / 2, this.size, this.size);
-        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.restore();
     }
     update() {
         this.draw();
         if (this.size > 0) {
-            this.ttl >= 40 ? pubVars.effects.splice(this.i + 1, 1) : this.ttl += 0.5;
+            this.ttl >= 100 ? _vars.effects.splice(this.i + 1, 1) : this.ttl += 0.5;
             this.angle += 5;
-            this.size += 0.5;
+            this.size += 0.06;
+            console.log()
         } else {
             this.size = 10;
         }
     }
 }
 function scoreManager() {
-    let currentScore = pubVars.snakeLength - 1;
+    let currentScore = _vars.snakeLength - 1;
     score.innerText = currentScore.toString();
 }
 
-function setup() { // Intialization of the game.
+function setup() {
     cnvRes();
-    input.listen();
-    pubVars.segments = 32;
-    pubVars.snakeLength = 1;
-    pubVars.snake = new Snake("head");
-    pubVars.food = new Food();
+    _input.listen();
+    _vars.segments = 32;
+    _vars.snakeLength = 1;
+    _vars.snake = new Snake("head");
+    _vars.food = new Food();
     loop();
 };
 
 function loop() {
-    pubVars.update = setInterval(() => {
-        if (!pubVars.gameOver) {
+    _vars.update = setInterval(() => {
+        if (!_vars.gameOver) {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            pubVars.snake.update();
-            if (pubVars.tails.length) {
-                for (let i = 0; i < pubVars.tails.length; i++) {
-                    pubVars.tails[i].update();
+            _vars.snake.update();
+            if (_vars.tails.length) {
+                for (let i = 0; i < _vars.tails.length; i++) {
+                    _vars.tails[i].update();
                 }
             }
-            pubVars.food.draw();
+            _vars.food.draw();
             scoreManager();
-            for (let i = 0; i < pubVars.effects.length; i++) {
-                pubVars.effects[i].update();
+            for (let i = 0; i < _vars.effects.length; i++) {
+                _vars.effects[i].update();
             }
         } else {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -321,31 +326,31 @@ replay.addEventListener('click', () => {
     reset();
 });
 function gameOver() {
-    pubVars.maxScore ? null : pubVars.maxScore = pubVars.snakeLength - 1;
-    pubVars.snakeLength - 1 > pubVars.maxScore ? pubVars.maxScore = pubVars.snakeLength - 1 : null;
-    window.localStorage.setItem('maxScore', pubVars.maxScore)
+    _vars.maxScore ? null : _vars.maxScore = _vars.snakeLength - 1;
+    _vars.snakeLength - 1 > _vars.maxScore ? _vars.maxScore = _vars.snakeLength - 1 : null;
+    window.localStorage.setItem('maxScore', _vars.maxScore)
     ctx.fillStyle = "#4cffd7";
     ctx.textAlign = "center";
     ctx.font = "bold 30px Poppins, sans-serif";
     ctx.fillText("GAME OVER", ctx.canvas.width / 2, ctx.canvas.height / 2);
     ctx.font = "15px Poppins, sans-serif";
-    ctx.fillText(`SCORE   ${pubVars.snakeLength - 1}`, ctx.canvas.width / 2, ctx.canvas.height / 2 + 60);
-    ctx.fillText(`MAXSCORE   ${pubVars.maxScore}`, ctx.canvas.width / 2, ctx.canvas.height / 2 + 80);
+    ctx.fillText(`SCORE   ${_vars.snakeLength - 1}`, ctx.canvas.width / 2, ctx.canvas.height / 2 + 60);
+    ctx.fillText(`MAXSCORE   ${_vars.maxScore}`, ctx.canvas.width / 2, ctx.canvas.height / 2 + 80);
 }
 function reset() {
-    clearInterval(pubVars.update);
-    pubVars.snake = undefined;
-    pubVars.snakeLength = undefined;
-    pubVars.food = undefined;
-    pubVars.currentHue = undefined;
-    pubVars.segments = undefined;
-    pubVars.historyPath = [];
-    pubVars.gameOver = false;
-    pubVars.tails = [];
-    pubVars.update = undefined;
-    input.left = false;
-    input.down = false;
-    input.right = true;
-    input.up = false;
+    clearInterval(_vars.update);
+    _vars.snake = undefined;
+    _vars.snakeLength = undefined;
+    _vars.food = undefined;
+    _vars.currentHue = undefined;
+    _vars.segments = undefined;
+    _vars.historyPath = [];
+    _vars.gameOver = false;
+    _vars.tails = [];
+    _vars.update = undefined;
+    _input.left = false;
+    _input.down = false;
+    _input.right = true;
+    _input.up = false;
     setup();
 }
