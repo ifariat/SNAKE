@@ -1,5 +1,5 @@
-let replay = document.querySelector('#replay');
-let score = document.querySelector('#score');
+let replay = document.querySelector("#replay");
+let score = document.querySelector("#score");
 let canvas = document.createElement("canvas");
 document.querySelector("#canvas").appendChild(canvas);
 let ctx = canvas ? canvas.getContext("2d") : null;
@@ -18,10 +18,10 @@ let _vars = {
     gameOver: false,
     tails: [],
     update: undefined,
-    maxScore: window.localStorage.getItem('maxScore') || undefined,
+    maxScore: window.localStorage.getItem("maxScore") || undefined,
     effects: [],
     effectCount: 50
-}
+};
 let _helpers = {
     collision(isSelfCol, snakeHead) {
         if (isSelfCol) {
@@ -29,11 +29,14 @@ let _helpers = {
                 _vars.food.respawn();
                 _vars.tails.push(new Snake(_vars.snakeLength - 1, "tail"));
                 _vars.snakeLength++;
-                _vars.snake.delay - 0.5;
+                _vars.snake.delay - .5;
             }
         } else {
             for (let i = 1; i < _vars.historyPath.length; i++) {
-                if (snakeHead.x == _vars.historyPath[i].x && snakeHead.y == _vars.historyPath[i].y) {
+                if (
+                    snakeHead.x == _vars.historyPath[i].x &&
+                    snakeHead.y == _vars.historyPath[i].y
+                ) {
                     _vars.gameOver = true;
                 }
             }
@@ -43,17 +46,24 @@ let _helpers = {
         return Math.floor(Math.random() * 360);
     },
     randCor(newCors) {
-        let randX = (Math.floor(Math.random() * _vars.segments) * ctx.canvas.width) / _vars.segments;
-        let randY = (Math.floor(Math.random() * _vars.segments) * ctx.canvas.height) / _vars.segments;
+        let randX =
+            (Math.floor(Math.random() * _vars.segments) * ctx.canvas.width) /
+            _vars.segments;
+        let randY =
+            (Math.floor(Math.random() * _vars.segments) * ctx.canvas.height) /
+            _vars.segments;
 
         if (newCors) {
-            randX = (Math.floor(Math.random() * _vars.segments) * ctx.canvas.width) / _vars.segments;
-            randY = (Math.floor(Math.random() * _vars.segments) * ctx.canvas.height) / _vars.segments;
+            randX =
+                (Math.floor(Math.random() * _vars.segments) * ctx.canvas.width) /
+                _vars.segments;
+            randY =
+                (Math.floor(Math.random() * _vars.segments) * ctx.canvas.height) /
+                _vars.segments;
             return { randX, randY };
         } else {
             return { randX, randY };
         }
-
     },
     positionLogger(limit, loc) {
         _vars.historyPath.push(loc);
@@ -66,7 +76,7 @@ let _helpers = {
             return [0, 0, 0];
         }
 
-        var chroma = (1 - Math.abs((2 * lightness) - 1)) * saturation;
+        var chroma = (1 - Math.abs(2 * lightness - 1)) * saturation;
         var huePrime = hue / 60;
         var secondComponent = chroma * (1 - Math.abs((huePrime % 2) - 1));
 
@@ -101,12 +111,16 @@ let _helpers = {
             blue = secondComponent;
         }
 
-        var lightnessAdjustment = lightness - (chroma / 2);
+        var lightnessAdjustment = lightness - chroma / 2;
         red += lightnessAdjustment;
         green += lightnessAdjustment;
         blue += lightnessAdjustment;
 
-        return [Math.round(red * 255), Math.round(green * 255), Math.round(blue * 255)];
+        return [
+            Math.round(red * 255),
+            Math.round(green * 255),
+            Math.round(blue * 255)
+        ];
     },
     lerp(start, end, t) {
         return start * (1 - t) + end * t;
@@ -166,6 +180,7 @@ let _input = {
 
 class Snake {
     constructor(i, type) {
+        console.log(i, 100/i)
         this.x = type == "tail" ? _vars.historyPath[i].x : 0;
         this.y = type == "tail" ? _vars.historyPath[i].y : 0;
         this.type = type;
@@ -173,12 +188,12 @@ class Snake {
         this.delay = 10;
         this.localDelay = 10;
         this.size = ctx.canvas.width / _vars.segments;
-        this.color = "white";
+        this.color = type == "tail"? "#d3d6e1" : "white";
     }
     draw() {
-        ctx.lineWidth = 1;
-        ctx.fillStyle = this.color;
+        ctx.lineWidth = 1.5;
         ctx.strokeStyle = "#181825";
+        ctx.fillStyle = this.color;
         ctx.strokeRect(this.x, this.y, this.size, this.size);
         ctx.fillRect(this.x, this.y, this.size, this.size);
     }
@@ -227,8 +242,12 @@ class Snake {
 class Food extends Snake {
     constructor() {
         super();
-        this.x = (Math.floor(Math.random() * _vars.segments) * ctx.canvas.width) / _vars.segments;
-        this.y = (Math.floor(Math.random() * _vars.segments) * ctx.canvas.height) / _vars.segments;
+        this.x =
+            (Math.floor(Math.random() * _vars.segments) * ctx.canvas.width) /
+            _vars.segments;
+        this.y =
+            (Math.floor(Math.random() * _vars.segments) * ctx.canvas.height) /
+            _vars.segments;
         this.color = _vars.currentHue = `hsl(${_helpers.randHue()}, 100%, 55%)`;
     }
     draw() {
@@ -241,13 +260,27 @@ class Food extends Snake {
     }
     respawn() {
         for (let i = 0; i < _vars.effectCount; i++) {
-            _vars.effects.push(new Effect(_vars.food.x, _vars.food.y, _vars.currentHue, _vars.food.size));
+            _vars.effects.push(
+                new Effect(
+                    _vars.food.x,
+                    _vars.food.y,
+                    _vars.currentHue,
+                    _vars.food.size
+                )
+            );
         }
         this.color = _vars.currentHue = `hsl(${_helpers.randHue()}, 100%, 50%)`;
-        this.x = (Math.floor(Math.random() * _vars.segments) * ctx.canvas.width) / _vars.segments;
-        this.y = (Math.floor(Math.random() * _vars.segments) * ctx.canvas.height) / _vars.segments;
+        this.x =
+            (Math.floor(Math.random() * _vars.segments) * ctx.canvas.width) /
+            _vars.segments;
+        this.y =
+            (Math.floor(Math.random() * _vars.segments) * ctx.canvas.height) /
+            _vars.segments;
         for (let i = 0; i < _vars.historyPath.length; i++) {
-            if (this.x == _vars.historyPath[i].x && this.y == _vars.historyPath[i].y) {
+            if (
+                this.x == _vars.historyPath[i].x &&
+                this.y == _vars.historyPath[i].y
+            ) {
                 this.respawn();
             }
         }
@@ -261,21 +294,26 @@ class Effect {
         this.color = color;
         this.size = size / 2;
         this.ttl = 0;
-        this.gravity = 0.1;
+        this.gravity = .1;
         this.vel = {
             x: Math.random() * 5 - 2.5,
             y: Math.random() * 5 - 2.5
-        }
+        };
     }
     draw() {
-        let hsl = this.color.split('').filter(l => l.match(/[^hsl()$% ]/g)).join('').split(',').map(n => +n);
+        let hsl = this.color
+            .split("")
+            .filter((l) => l.match(/[^hsl()$% ]/g))
+            .join("")
+            .split(",")
+            .map((n) => +n);
         let [r, g, b] = _helpers.hsl2rgb(hsl[0], hsl[1] / 100, hsl[2] / 100);
-        ctx.fillStyle = `rgb(${r},${g},${b},${1 / this.ttl})`;
+        ctx.fillStyle = `rgb(${r},${g},${b},${1})`;
         ctx.fillRect(this.x, this.y, this.size, this.size);
     }
     update() {
         this.draw();
-        this.size -= .05;
+        this.size -= .3;
         this.ttl += .5;
         this.y += this.vel.y;
         this.x += this.vel.x;
@@ -288,7 +326,7 @@ function scoreManager() {
 }
 function cleanMem() {
     for (let i = 0; i < _vars.effects.length; i++) {
-        if (_vars.effects[i].ttl >= 100) {
+        if (_vars.effects[i].size <= 0) {
             _vars.effects.splice(i, 1);
         }
     }
@@ -301,7 +339,7 @@ function setup() {
     _vars.snake = new Snake("head");
     _vars.food = new Food();
     loop();
-};
+}
 
 function loop() {
     _vars.update = setInterval(() => {
@@ -323,24 +361,34 @@ function loop() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             gameOver();
         }
-    }, 1000 / 60)
+    }, 1000 / 60);
 }
 setup();
 
-replay.addEventListener('click', () => {
+replay.addEventListener("click", () => {
     reset();
 });
 function gameOver() {
-    _vars.maxScore ? null : _vars.maxScore = _vars.snakeLength - 1;
-    _vars.snakeLength - 1 > _vars.maxScore ? _vars.maxScore = _vars.snakeLength - 1 : null;
-    window.localStorage.setItem('maxScore', _vars.maxScore)
+    _vars.maxScore ? null : (_vars.maxScore = _vars.snakeLength - 1);
+    _vars.snakeLength - 1 > _vars.maxScore
+        ? (_vars.maxScore = _vars.snakeLength - 1)
+        : null;
+    window.localStorage.setItem("maxScore", _vars.maxScore);
     ctx.fillStyle = "#4cffd7";
     ctx.textAlign = "center";
     ctx.font = "bold 30px Poppins, sans-serif";
     ctx.fillText("GAME OVER", ctx.canvas.width / 2, ctx.canvas.height / 2);
     ctx.font = "15px Poppins, sans-serif";
-    ctx.fillText(`SCORE   ${_vars.snakeLength - 1}`, ctx.canvas.width / 2, ctx.canvas.height / 2 + 60);
-    ctx.fillText(`MAXSCORE   ${_vars.maxScore}`, ctx.canvas.width / 2, ctx.canvas.height / 2 + 80);
+    ctx.fillText(
+        `SCORE   ${_vars.snakeLength - 1}`,
+        ctx.canvas.width / 2,
+        ctx.canvas.height / 2 + 60
+    );
+    ctx.fillText(
+        `MAXSCORE   ${_vars.maxScore}`,
+        ctx.canvas.width / 2,
+        ctx.canvas.height / 2 + 80
+    );
 }
 function reset() {
     clearInterval(_vars.update);
@@ -359,7 +407,3 @@ function reset() {
     _input.up = false;
     setup();
 }
-
-
-
-
