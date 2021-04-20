@@ -194,8 +194,8 @@ class Snake {
         ctx.shadowBlur = 0;
         if (this.type !== "tail") {
             ctx.shadowBlur = 15;
-            ctx.shadowColor = "rgba(255,255,255,.9 )";
-            ctx.strokeStyle = "rgba(255,255,255,.9 )";
+            ctx.shadowColor = "rgba(255,255,255,.3 )";
+            ctx.strokeStyle = "rgba(255,255,255,.3 )";
         }
         ctx.strokeStyle = "#181825";
         ctx.lineWidth = 1;
