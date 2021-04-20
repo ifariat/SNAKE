@@ -181,8 +181,8 @@ let _input = {
 class Snake {
     constructor(i, type) {
         console.log(i, 100 / i)
-        this.x = type == "tail" ? _vars.historyPath[i].x : 0;
-        this.y = type == "tail" ? _vars.historyPath[i].y : 0;
+        this.x = type === "tail" ? _vars.historyPath[i].x : 0;
+        this.y = type === "tail" ? _vars.historyPath[i].y : 0;
         this.type = type;
         this.index = i;
         this.delay = 10;
@@ -191,10 +191,16 @@ class Snake {
         this.color = type == "tail" ? "#d3d6e1" : "white";
     }
     draw() {
-        ctx.lineWidth = 1.5;
+        ctx.shadowBlur = 0;
+        if (this.type !== "tail") {
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = "rgba(255,255,255,.9 )";
+            ctx.strokeStyle = "rgba(255,255,255,.9 )";
+        }
         ctx.strokeStyle = "#181825";
-        ctx.fillStyle = this.color;
+        ctx.lineWidth = 1;
         ctx.strokeRect(this.x, this.y, this.size, this.size);
+        ctx.fillStyle = this.color;
         ctx.fillRect(this.x, this.y, this.size, this.size);
     }
     update() {
