@@ -180,7 +180,7 @@ let _input = {
 
 class Snake {
     constructor(i, type) {
-        console.log(i, 100/i)
+        console.log(i, 100 / i)
         this.x = type == "tail" ? _vars.historyPath[i].x : 0;
         this.y = type == "tail" ? _vars.historyPath[i].y : 0;
         this.type = type;
@@ -188,7 +188,7 @@ class Snake {
         this.delay = 10;
         this.localDelay = 10;
         this.size = ctx.canvas.width / _vars.segments;
-        this.color = type == "tail"? "#d3d6e1" : "white";
+        this.color = type == "tail" ? "#d3d6e1" : "white";
     }
     draw() {
         ctx.lineWidth = 1.5;
@@ -253,7 +253,7 @@ class Food extends Snake {
     draw() {
         ctx.save();
         ctx.shadowColor = this.color;
-        ctx.shadowBlur = 50;
+        ctx.shadowBlur = 30;
         ctx.fillStyle = this.color;
         ctx.fillRect(this.x, this.y, this.size, this.size);
         ctx.restore();
@@ -390,6 +390,7 @@ function gameOver() {
         ctx.canvas.height / 2 + 80
     );
 }
+
 function reset() {
     clearInterval(_vars.update);
     _vars.snake = undefined;
