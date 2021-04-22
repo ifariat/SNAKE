@@ -19,8 +19,8 @@ let _vars = {
     tails: [],
     update: undefined,
     maxScore: window.localStorage.getItem("maxScore") || undefined,
-    effects: [],
-    effectCount: 50
+    particles: [],
+    particleCount: 50
 };
 let _helpers = {
     collision(isSelfCol, snakeHead) {
@@ -180,7 +180,6 @@ let _input = {
 
 class Snake {
     constructor(i, type) {
-        console.log(i, 100 / i)
         this.x = type === "tail" ? _vars.historyPath[i].x : 0;
         this.y = type === "tail" ? _vars.historyPath[i].y : 0;
         this.type = type;
@@ -197,8 +196,8 @@ class Snake {
             ctx.shadowColor = "rgba(255,255,255,.3 )";
             ctx.strokeStyle = "rgba(255,255,255,.3 )";
         }
-        ctx.strokeStyle = "#181825";
-        ctx.lineWidth = 1;
+        ctx.strokeStyle = 'rgba(255,255,255,.8 )';
+        ctx.lineWidth = 2;
         ctx.strokeRect(this.x, this.y, this.size, this.size);
         ctx.fillStyle = this.color;
         ctx.fillRect(this.x, this.y, this.size, this.size);
@@ -265,9 +264,9 @@ class Food extends Snake {
         ctx.restore();
     }
     respawn() {
-        for (let i = 0; i < _vars.effectCount; i++) {
-            _vars.effects.push(
-                new Effect(
+        for (let i = 0; i < _vars.particleCount; i++) {
+            _vars.particles.push(
+                new Particle(
                     _vars.food.x,
                     _vars.food.y,
                     _vars.currentHue,
@@ -293,7 +292,7 @@ class Food extends Snake {
     }
 }
 
-class Effect {
+class Particle {
     constructor(x, y, color, size) {
         this.x = x;
         this.y = y;
@@ -314,8 +313,10 @@ class Effect {
             .split(",")
             .map((n) => +n);
         let [r, g, b] = _helpers.hsl2rgb(hsl[0], hsl[1] / 100, hsl[2] / 100);
+        ctx.globalCompositeOperation = 'lighter';
         ctx.fillStyle = `rgb(${r},${g},${b},${1})`;
         ctx.fillRect(this.x, this.y, this.size, this.size);
+        ctx.globalCompositeOperation = 'source-over';
     }
     update() {
         this.draw();
@@ -331,16 +332,33 @@ function scoreManager() {
     score.innerText = currentScore.toString();
 }
 function cleanMem() {
-    for (let i = 0; i < _vars.effects.length; i++) {
-        if (_vars.effects[i].size <= 0) {
-            _vars.effects.splice(i, 1);
+    for (let i = 0; i < _vars.particles.length; i++) {
+        if (_vars.particles[i].size <= 0) {
+            _vars.particles.splice(i, 1);
         }
     }
 }
+function grid() {
+    ctx.lineWidth = 1.1;
+    ctx.strokeStyle = "#232332";
+    ctx.shadowBlur = 0;
+    for (let i = 1; i < _vars.segments; i++) {
+        let f = (ctx.canvas.width / _vars.segments) * i;
+        ctx.beginPath();
+        ctx.moveTo(f, 0);
+        ctx.lineTo(f, ctx.canvas.height);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(0, f);
+        ctx.lineTo(ctx.canvas.width, f);
+        ctx.stroke();
+    }
+}
+
 function setup() {
     cnvRes();
     _input.listen();
-    _vars.segments = 32;
+    _vars.segments = 20;
     _vars.snakeLength = 1;
     _vars.snake = new Snake("head");
     _vars.food = new Food();
@@ -351,6 +369,7 @@ function loop() {
     _vars.update = setInterval(() => {
         if (!_vars.gameOver) {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
+            grid();
             _vars.snake.update();
             if (_vars.tails.length) {
                 for (let i = 0; i < _vars.tails.length; i++) {
@@ -359,8 +378,8 @@ function loop() {
             }
             _vars.food.draw();
             scoreManager();
-            for (let i = 0; i < _vars.effects.length; i++) {
-                _vars.effects[i].update();
+            for (let i = 0; i < _vars.particles.length; i++) {
+                _vars.particles[i].update();
             }
             cleanMem();
         } else {
@@ -414,3 +433,4 @@ function reset() {
     _input.up = false;
     setup();
 }
+
