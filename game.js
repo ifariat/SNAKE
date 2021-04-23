@@ -184,7 +184,7 @@ class Snake {
         this.y = type === "tail" ? _vars.historyPath[i].y : 0;
         this.type = type;
         this.index = i;
-        this.delay = 10;
+        this.delay = 20;
         this.localDelay = 10;
         this.size = ctx.canvas.width / _vars.segments;
         this.color = type == "tail" ? "#d3d6e1" : "white";
@@ -204,7 +204,7 @@ class Snake {
     }
     update() {
         this.draw();
-        if (this.localDelay < 0) {
+        if (--this.localDelay < 0) {
             if (this.type == "tail") {
                 this.x = _vars.historyPath[this.index].x;
                 this.y = _vars.historyPath[this.index].y;
@@ -274,19 +274,16 @@ class Food extends Snake {
                 )
             );
         }
+        let nX = (Math.floor(Math.random() * _vars.segments) * ctx.canvas.width) / _vars.segments;
+        let nY = (Math.floor(Math.random() * _vars.segments) * ctx.canvas.height) / _vars.segments;
         this.color = _vars.currentHue = `hsl(${_helpers.randHue()}, 100%, 50%)`;
-        this.x =
-            (Math.floor(Math.random() * _vars.segments) * ctx.canvas.width) /
-            _vars.segments;
-        this.y =
-            (Math.floor(Math.random() * _vars.segments) * ctx.canvas.height) /
-            _vars.segments;
         for (let i = 0; i < _vars.historyPath.length; i++) {
-            if (
-                this.x == _vars.historyPath[i].x &&
-                this.y == _vars.historyPath[i].y
-            ) {
+            if (nX == _vars.historyPath[i].x && nY == _vars.historyPath[i].y) {
+                console.log('duplicate found')
                 this.respawn();
+            } else {
+                this.x = nX;
+                this.y = nY;
             }
         }
     }
