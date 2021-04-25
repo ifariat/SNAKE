@@ -26,6 +26,7 @@ let _helpers = {
     collision(isSelfCol, snakeHead) {
         if (isSelfCol) {
             if (snakeHead.x == _vars.food.x && snakeHead.y == _vars.food.y) {
+                particleSplash()
                 _vars.food.respawn();
                 _vars.tails.push(new Snake(_vars.snakeLength - 1, "tail"));
                 _vars.snakeLength++;
@@ -45,27 +46,7 @@ let _helpers = {
     randHue() {
         return Math.floor(Math.random() * 360);
     },
-    randCor(newCors) {
-        let randX =
-            (Math.floor(Math.random() * _vars.segments) * ctx.canvas.width) /
-            _vars.segments;
-        let randY =
-            (Math.floor(Math.random() * _vars.segments) * ctx.canvas.height) /
-            _vars.segments;
-
-        if (newCors) {
-            randX =
-                (Math.floor(Math.random() * _vars.segments) * ctx.canvas.width) /
-                _vars.segments;
-            randY =
-                (Math.floor(Math.random() * _vars.segments) * ctx.canvas.height) /
-                _vars.segments;
-            return { randX, randY };
-        } else {
-            return { randX, randY };
-        }
-    },
-    positionLogger(limit, loc) {
+    locationLog(limit, loc) {
         _vars.historyPath.push(loc);
         if (_vars.historyPath.length > limit) {
             _vars.historyPath.shift();
@@ -184,7 +165,7 @@ class Snake {
         this.y = type === "tail" ? _vars.historyPath[i].y : 0;
         this.type = type;
         this.index = i;
-        this.delay = 20;
+        this.delay = 10;
         this.localDelay = 10;
         this.size = ctx.canvas.width / _vars.segments;
         this.color = type == "tail" ? "#d3d6e1" : "white";
@@ -204,7 +185,7 @@ class Snake {
     }
     update() {
         this.draw();
-        if (--this.localDelay < 0) {
+        if (this.localDelay < 0) {
             if (this.type == "tail") {
                 this.x = _vars.historyPath[this.index].x;
                 this.y = _vars.historyPath[this.index].y;
@@ -236,7 +217,7 @@ class Snake {
                 }
                 _helpers.collision(true, { ...this });
                 _helpers.collision(false, { ...this });
-                _helpers.positionLogger(_vars.snakeLength, { x: this.x, y: this.y });
+                _helpers.locationLog(_vars.snakeLength, { x: this.x, y: this.y });
             }
         } else {
             this.localDelay--;
@@ -264,23 +245,13 @@ class Food extends Snake {
         ctx.restore();
     }
     respawn() {
-        for (let i = 0; i < _vars.particleCount; i++) {
-            _vars.particles.push(
-                new Particle(
-                    _vars.food.x,
-                    _vars.food.y,
-                    _vars.currentHue,
-                    _vars.food.size
-                )
-            );
-        }
         let nX = (Math.floor(Math.random() * _vars.segments) * ctx.canvas.width) / _vars.segments;
         let nY = (Math.floor(Math.random() * _vars.segments) * ctx.canvas.height) / _vars.segments;
         this.color = _vars.currentHue = `hsl(${_helpers.randHue()}, 100%, 50%)`;
+        if (this.x == nX && this.y == nY) return this.respawn();
         for (let i = 0; i < _vars.historyPath.length; i++) {
             if (nX == _vars.historyPath[i].x && nY == _vars.historyPath[i].y) {
-                console.log('duplicate found')
-                this.respawn();
+                return this.respawn();
             } else {
                 this.x = nX;
                 this.y = nY;
@@ -333,6 +304,18 @@ function cleanMem() {
         if (_vars.particles[i].size <= 0) {
             _vars.particles.splice(i, 1);
         }
+    }
+}
+function particleSplash() {
+    for (let i = 0; i < _vars.particleCount; i++) {
+        _vars.particles.push(
+            new Particle(
+                _vars.food.x,
+                _vars.food.y,
+                _vars.currentHue,
+                _vars.food.size
+            )
+        );
     }
 }
 function grid() {
