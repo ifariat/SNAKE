@@ -6,7 +6,7 @@ This simple project was a JavaScript exercice, which allowed me to put my accumu
 ## Technologies 
 vanilla JavaScript on html canvas.
 
-![Alt Snake Game Gif](https://media.giphy.com/media/ETzvrf7CYLSs7fqEt5/giphy.gif)
+![Alt Snake Game Gif](https://media.giphy.com/media/73pNlQZH522GsM5en9/giphy.gif)
 
 
 
