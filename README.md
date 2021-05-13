@@ -1,7 +1,7 @@
 # SNAKE 
 
 ## Introduction
-This simple project was a JavaScript exercice, which allowed me to put my accumulated knowledge into action as well as to practise my problem solving skills.
+This is a simple JS vanilla project with the goal of practicing my JS skills as well as my problem solving skills.
 
 ## Technologies 
 vanilla JavaScript on html canvas.
