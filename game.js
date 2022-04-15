@@ -1,416 +1,391 @@
-let replay = document.querySelector("#replay");
-let score = document.querySelector("#score");
-let canvas = document.createElement("canvas");
-document.querySelector("#canvas").appendChild(canvas);
-let ctx = canvas ? canvas.getContext("2d") : null;
+/** 
+This is a snake game I made with Vanilla Javascript.
+Follow me on twitter @fariatondo
+**/
 
-function cnvRes(width = 400, height = 400) {
-    ctx.canvas.width = width;
-    ctx.canvas.height = height;
-}
-let _vars = {
-    snake: undefined,
-    snakeLength: undefined,
-    food: undefined,
-    currentHue: undefined,
-    segments: undefined,
-    historyPath: [],
-    gameOver: false,
-    tails: [],
-    update: undefined,
-    maxScore: window.localStorage.getItem("maxScore") || undefined,
-    particles: [],
-    particleCount: 50
-};
-let _helpers = {
-    collision(isSelfCol, snakeHead) {
-        if (isSelfCol) {
-            if (snakeHead.x == _vars.food.x && snakeHead.y == _vars.food.y) {
-                particleSplash()
-                _vars.food.respawn();
-                _vars.tails.push(new Snake(_vars.snakeLength - 1, "tail"));
-                _vars.snakeLength++;
-                _vars.snake.delay - .5;
-            }
-        } else {
-            for (let i = 1; i < _vars.historyPath.length; i++) {
-                if (
-                    snakeHead.x == _vars.historyPath[i].x &&
-                    snakeHead.y == _vars.historyPath[i].y
-                ) {
-                    _vars.gameOver = true;
-                }
-            }
-        }
-    },
-    randHue() {
-        return Math.floor(Math.random() * 360);
-    },
-    locationLog(limit, loc) {
-        _vars.historyPath.push(loc);
-        if (_vars.historyPath.length > limit) {
-            _vars.historyPath.shift();
-        }
-    },
-    hsl2rgb(hue, saturation, lightness) {
-        if (hue == undefined) {
-            return [0, 0, 0];
-        }
+let dom_replay = document.querySelector("#replay");
+let dom_score = document.querySelector("#score");
+let dom_canvas = document.createElement("canvas");
+document.querySelector("#canvas").appendChild(dom_canvas);
+let CTX = dom_canvas.getContext("2d");
 
-        var chroma = (1 - Math.abs(2 * lightness - 1)) * saturation;
-        var huePrime = hue / 60;
-        var secondComponent = chroma * (1 - Math.abs((huePrime % 2) - 1));
+const W = (dom_canvas.width = 400);
+const H = (dom_canvas.height = 400);
 
-        huePrime = Math.floor(huePrime);
-        var red;
-        var green;
-        var blue;
+let snake,
+  food,
+  currentHue,
+  cells = 20,
+  cellSize,
+  isGameOver = false,
+  tails = [],
+  score = 00,
+  maxScore = window.localStorage.getItem("maxScore") || undefined,
+  particles = [],
+  splashingParticleCount = 20,
+  cellsCount,
+  requestID;
 
-        if (huePrime === 0) {
-            red = chroma;
-            green = secondComponent;
-            blue = 0;
-        } else if (huePrime === 1) {
-            red = secondComponent;
-            green = chroma;
-            blue = 0;
-        } else if (huePrime === 2) {
-            red = 0;
-            green = chroma;
-            blue = secondComponent;
-        } else if (huePrime === 3) {
-            red = 0;
-            green = secondComponent;
-            blue = chroma;
-        } else if (huePrime === 4) {
-            red = secondComponent;
-            green = 0;
-            blue = chroma;
-        } else if (huePrime === 5) {
-            red = chroma;
-            green = 0;
-            blue = secondComponent;
-        }
-
-        var lightnessAdjustment = lightness - chroma / 2;
-        red += lightnessAdjustment;
-        green += lightnessAdjustment;
-        blue += lightnessAdjustment;
-
-        return [
-            Math.round(red * 255),
-            Math.round(green * 255),
-            Math.round(blue * 255)
-        ];
-    },
-    lerp(start, end, t) {
-        return start * (1 - t) + end * t;
+let helpers = {
+  Vec: class {
+    constructor(x, y) {
+      this.x = x;
+      this.y = y;
     }
+    add(v) {
+      this.x += v.x;
+      this.y += v.y;
+      return this;
+    }
+    mult(v) {
+      if (v instanceof helpers.Vec) {
+        this.x *= v.x;
+        this.y *= v.y;
+        return this;
+      } else {
+        this.x *= v;
+        this.y *= v;
+        return this;
+      }
+    }
+  },
+  isCollision(v1, v2) {
+    return v1.x == v2.x && v1.y == v2.y;
+  },
+  garbageCollector() {
+    for (let i = 0; i < particles.length; i++) {
+      if (particles[i].size <= 0) {
+        particles.splice(i, 1);
+      }
+    }
+  },
+  drawGrid() {
+    CTX.lineWidth = 1.1;
+    CTX.strokeStyle = "#232332";
+    CTX.shadowBlur = 0;
+    for (let i = 1; i < cells; i++) {
+      let f = (W / cells) * i;
+      CTX.beginPath();
+      CTX.moveTo(f, 0);
+      CTX.lineTo(f, H);
+      CTX.stroke();
+      CTX.beginPath();
+      CTX.moveTo(0, f);
+      CTX.lineTo(W, f);
+      CTX.stroke();
+      CTX.closePath();
+    }
+  },
+  randHue() {
+    return ~~(Math.random() * 360);
+  },
+  hsl2rgb(hue, saturation, lightness) {
+    if (hue == undefined) {
+      return [0, 0, 0];
+    }
+    let chroma = (1 - Math.abs(2 * lightness - 1)) * saturation;
+    let huePrime = hue / 60;
+    let secondComponent = chroma * (1 - Math.abs((huePrime % 2) - 1));
+
+    huePrime = ~~huePrime;
+    let red;
+    let green;
+    let blue;
+
+    if (huePrime === 0) {
+      red = chroma;
+      green = secondComponent;
+      blue = 0;
+    } else if (huePrime === 1) {
+      red = secondComponent;
+      green = chroma;
+      blue = 0;
+    } else if (huePrime === 2) {
+      red = 0;
+      green = chroma;
+      blue = secondComponent;
+    } else if (huePrime === 3) {
+      red = 0;
+      green = secondComponent;
+      blue = chroma;
+    } else if (huePrime === 4) {
+      red = secondComponent;
+      green = 0;
+      blue = chroma;
+    } else if (huePrime === 5) {
+      red = chroma;
+      green = 0;
+      blue = secondComponent;
+    }
+
+    let lightnessAdjustment = lightness - chroma / 2;
+    red += lightnessAdjustment;
+    green += lightnessAdjustment;
+    blue += lightnessAdjustment;
+
+    return [
+      Math.round(red * 255),
+      Math.round(green * 255),
+      Math.round(blue * 255)
+    ];
+  },
+  lerp(start, end, t) {
+    return start * (1 - t) + end * t;
+  }
 };
 
-let _input = {
-    left: false,
-    down: false,
-    right: true,
-    up: false,
-    listen() {
-        addEventListener(
-            "keydown",
-            (e) => {
-                switch (e.key) {
-                    case "ArrowLeft":
-                        if (!this.right) {
-                            this.left = true;
-                            this.down = false;
-                            this.right = false;
-                            this.up = false;
-                        }
-                        break;
-                    case "ArrowRight":
-                        if (!this.left) {
-                            this.left = false;
-                            this.down = false;
-                            this.right = true;
-                            this.up = false;
-                        }
-                        break;
-                    case "ArrowUp":
-                        if (!this.down) {
-                            this.left = false;
-                            this.down = false;
-                            this.right = false;
-                            this.up = true;
-                        }
-                        break;
-                    case "ArrowDown":
-                        if (!this.up) {
-                            this.left = false;
-                            this.down = true;
-                            this.right = false;
-                            this.up = false;
-                        }
-                        break;
-                    default:
-                        break;
-                }
-            },
-            false
-        );
-    }
+let KEY = {
+  ArrowUp: false,
+  ArrowRight: false,
+  ArrowDown: false,
+  ArrowLeft: false,
+  resetState() {
+    this.ArrowUp = false;
+    this.ArrowRight = false;
+    this.ArrowDown = false;
+    this.ArrowLeft = false;
+  },
+  listen() {
+    addEventListener(
+      "keydown",
+      (e) => {
+        if (e.key === "ArrowUp" && this.ArrowDown) return;
+        if (e.key === "ArrowDown" && this.ArrowUp) return;
+        if (e.key === "ArrowLeft" && this.ArrowRight) return;
+        if (e.key === "ArrowRight" && this.ArrowLeft) return;
+        this[e.key] = true;
+        Object.keys(this)
+          .filter((f) => f !== e.key && f !== "listen" && f !== "resetState")
+          .forEach((k) => {
+            this[k] = false;
+          });
+      },
+      false
+    );
+  }
 };
 
 class Snake {
-    constructor(i, type) {
-        this.x = type === "tail" ? _vars.historyPath[i].x : 0;
-        this.y = type === "tail" ? _vars.historyPath[i].y : 0;
-        this.type = type;
-        this.index = i;
-        this.delay = 10;
-        this.localDelay = 10;
-        this.size = ctx.canvas.width / _vars.segments;
-        this.color = type == "tail" ? "#d3d6e1" : "white";
+  constructor(i, type) {
+    this.pos = new helpers.Vec(W / 2, H / 2);
+    this.dir = new helpers.Vec(0, 0);
+    this.type = type;
+    this.index = i;
+    this.delay = 5;
+    this.size = W / cells;
+    this.color = "white";
+    this.history = [];
+    this.total = 1;
+  }
+  draw() {
+    let { x, y } = this.pos;
+    CTX.fillStyle = this.color;
+    CTX.shadowBlur = 20;
+    CTX.shadowColor = "rgba(255,255,255,.3 )";
+    CTX.fillRect(x, y, this.size, this.size);
+    CTX.shadowBlur = 0;
+    if (this.total >= 2) {
+      for (let i = 0; i < this.history.length - 1; i++) {
+        let { x, y } = this.history[i];
+        CTX.lineWidth = 1;
+        CTX.fillStyle = "rgba(225,225,225,1)";
+        CTX.fillRect(x, y, this.size, this.size);
+      }
     }
-    draw() {
-        ctx.shadowBlur = 0;
-        if (this.type !== "tail") {
-            ctx.shadowBlur = 15;
-            ctx.shadowColor = "rgba(255,255,255,.3 )";
-            ctx.strokeStyle = "rgba(255,255,255,.3 )";
-        }
-        ctx.strokeStyle = 'rgba(255,255,255,.8 )';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(this.x, this.y, this.size, this.size);
-        ctx.fillStyle = this.color;
-        ctx.fillRect(this.x, this.y, this.size, this.size);
+  }
+  walls() {
+    let { x, y } = this.pos;
+    if (x + cellSize > W) {
+      this.pos.x = 0;
     }
-    update() {
-        this.draw();
-        if (this.localDelay < 0) {
-            if (this.type == "tail") {
-                this.x = _vars.historyPath[this.index].x;
-                this.y = _vars.historyPath[this.index].y;
-            } else {
-                this.localDelay = this.delay;
-                if (_input.left) {
-                    this.x -= ctx.canvas.width / _vars.segments;
-                }
-                if (_input.right) {
-                    this.x += ctx.canvas.width / _vars.segments;
-                }
-                if (_input.up) {
-                    this.y -= ctx.canvas.width / _vars.segments;
-                }
-                if (_input.down) {
-                    this.y += ctx.canvas.width / _vars.segments;
-                }
-                if (this.x + ctx.canvas.width / _vars.segments > ctx.canvas.width) {
-                    this.x = 0;
-                }
-                if (this.y + ctx.canvas.height / _vars.segments > ctx.canvas.width) {
-                    this.y = 0;
-                }
-                if (this.y < 0) {
-                    this.y = ctx.canvas.height - ctx.canvas.height / _vars.segments;
-                }
-                if (this.x < 0) {
-                    this.x = ctx.canvas.width - ctx.canvas.width / _vars.segments;
-                }
-                _helpers.collision(true, { ...this });
-                _helpers.collision(false, { ...this });
-                _helpers.locationLog(_vars.snakeLength, { x: this.x, y: this.y });
-            }
-        } else {
-            this.localDelay--;
-        }
+    if (y + cellSize > W) {
+      this.pos.y = 0;
     }
+    if (y < 0) {
+      this.pos.y = H - cellSize;
+    }
+    if (x < 0) {
+      this.pos.x = W - cellSize;
+    }
+  }
+  controlls() {
+    let dir = this.size;
+    if (KEY.ArrowUp) {
+      this.dir = new helpers.Vec(0, -dir);
+    }
+    if (KEY.ArrowDown) {
+      this.dir = new helpers.Vec(0, dir);
+    }
+    if (KEY.ArrowLeft) {
+      this.dir = new helpers.Vec(-dir, 0);
+    }
+    if (KEY.ArrowRight) {
+      this.dir = new helpers.Vec(dir, 0);
+    }
+  }
+  selfCollision() {
+    for (let i = 0; i < this.history.length; i++) {
+      let p = this.history[i];
+      if (helpers.isCollision(this.pos, p)) {
+        isGameOver = true;
+      }
+    }
+  }
+  update() {
+    this.walls();
+    this.draw();
+    this.controlls();
+    if (!this.delay--) {
+      if (helpers.isCollision(this.pos, food.pos)) {
+        incrementScore();
+        particleSplash();
+        food.spawn();
+        this.total++;
+      }
+      this.history[this.total - 1] = new helpers.Vec(this.pos.x, this.pos.y);
+      for (let i = 0; i < this.total - 1; i++) {
+        this.history[i] = this.history[i + 1];
+      }
+      this.pos.add(this.dir);
+      this.delay = 5;
+      this.total > 3 ? this.selfCollision() : null;
+    }
+  }
 }
 
-class Food extends Snake {
-    constructor() {
-        super();
-        this.x =
-            (Math.floor(Math.random() * _vars.segments) * ctx.canvas.width) /
-            _vars.segments;
-        this.y =
-            (Math.floor(Math.random() * _vars.segments) * ctx.canvas.height) /
-            _vars.segments;
-        this.color = _vars.currentHue = `hsl(${_helpers.randHue()}, 100%, 55%)`;
+class Food {
+  constructor() {
+    this.pos = new helpers.Vec(
+      ~~(Math.random() * cells) * cellSize,
+      ~~(Math.random() * cells) * cellSize
+    );
+    this.color = currentHue = `hsl(${~~(Math.random() * 360)},100%,50%)`;
+    this.size = cellSize;
+  }
+  draw() {
+    let { x, y } = this.pos;
+    CTX.globalCompositeOperation = "lighter";
+    CTX.shadowBlur = 20;
+    CTX.shadowColor = this.color;
+    CTX.fillStyle = this.color;
+    CTX.fillRect(x, y, this.size, this.size);
+    CTX.globalCompositeOperation = "source-over";
+    CTX.shadowBlur = 0;
+  }
+  spawn() {
+    let randX = ~~(Math.random() * cells) * this.size;
+    let randY = ~~(Math.random() * cells) * this.size;
+    for (let path of snake.history) {
+      if (helpers.isCollision(new helpers.Vec(randX, randY), path)) {
+        return this.spawn();
+      }
     }
-    draw() {
-        ctx.save();
-        ctx.shadowColor = this.color;
-        ctx.shadowBlur = 30;
-        ctx.fillStyle = this.color;
-        ctx.fillRect(this.x, this.y, this.size, this.size);
-        ctx.restore();
-    }
-    respawn() {
-        let nX = (Math.floor(Math.random() * _vars.segments) * ctx.canvas.width) / _vars.segments;
-        let nY = (Math.floor(Math.random() * _vars.segments) * ctx.canvas.height) / _vars.segments;
-        this.color = _vars.currentHue = `hsl(${_helpers.randHue()}, 100%, 50%)`;
-        if (this.x == nX && this.y == nY) return this.respawn();
-        for (let i = 0; i < _vars.historyPath.length; i++) {
-            if (nX == _vars.historyPath[i].x && nY == _vars.historyPath[i].y) {
-                return this.respawn();
-            } else {
-                this.x = nX;
-                this.y = nY;
-            }
-        }
-    }
+    this.color = currentHue = `hsl(${helpers.randHue()}, 100%, 50%)`;
+    this.pos = new helpers.Vec(randX, randY);
+  }
 }
 
 class Particle {
-    constructor(x, y, color, size) {
-        this.x = x;
-        this.y = y;
-        this.color = color;
-        this.size = size / 2;
-        this.ttl = 0;
-        this.gravity = .1;
-        this.vel = {
-            x: Math.random() * 5 - 2.5,
-            y: Math.random() * 5 - 2.5
-        };
-    }
-    draw() {
-        let hsl = this.color
-            .split("")
-            .filter((l) => l.match(/[^hsl()$% ]/g))
-            .join("")
-            .split(",")
-            .map((n) => +n);
-        let [r, g, b] = _helpers.hsl2rgb(hsl[0], hsl[1] / 100, hsl[2] / 100);
-        ctx.globalCompositeOperation = 'lighter';
-        ctx.fillStyle = `rgb(${r},${g},${b},${1})`;
-        ctx.fillRect(this.x, this.y, this.size, this.size);
-        ctx.globalCompositeOperation = 'source-over';
-    }
-    update() {
-        this.draw();
-        this.size -= .3;
-        this.ttl += .5;
-        this.y += this.vel.y;
-        this.x += this.vel.x;
-        this.vel.y += this.gravity;
-    }
-}
-function scoreManager() {
-    let currentScore = _vars.snakeLength - 1;
-    score.innerText = currentScore.toString();
-}
-function cleanMem() {
-    for (let i = 0; i < _vars.particles.length; i++) {
-        if (_vars.particles[i].size <= 0) {
-            _vars.particles.splice(i, 1);
-        }
-    }
-}
-function particleSplash() {
-    for (let i = 0; i < _vars.particleCount; i++) {
-        _vars.particles.push(
-            new Particle(
-                _vars.food.x,
-                _vars.food.y,
-                _vars.currentHue,
-                _vars.food.size
-            )
-        );
-    }
-}
-function grid() {
-    ctx.lineWidth = 1.1;
-    ctx.strokeStyle = "#232332";
-    ctx.shadowBlur = 0;
-    for (let i = 1; i < _vars.segments; i++) {
-        let f = (ctx.canvas.width / _vars.segments) * i;
-        ctx.beginPath();
-        ctx.moveTo(f, 0);
-        ctx.lineTo(f, ctx.canvas.height);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.moveTo(0, f);
-        ctx.lineTo(ctx.canvas.width, f);
-        ctx.stroke();
-    }
+  constructor(pos, color, size, vel) {
+    this.pos = pos;
+    this.color = color;
+    this.size = Math.abs(size / 2);
+    this.ttl = 0;
+    this.gravity = -0.2;
+    this.vel = vel;
+  }
+  draw() {
+    let { x, y } = this.pos;
+    let hsl = this.color
+      .split("")
+      .filter((l) => l.match(/[^hsl()$% ]/g))
+      .join("")
+      .split(",")
+      .map((n) => +n);
+    let [r, g, b] = helpers.hsl2rgb(hsl[0], hsl[1] / 100, hsl[2] / 100);
+    CTX.shadowColor = `rgb(${r},${g},${b},${1})`;
+    CTX.shadowBlur = 0;
+    CTX.globalCompositeOperation = "lighter";
+    CTX.fillStyle = `rgb(${r},${g},${b},${1})`;
+    CTX.fillRect(x, y, this.size, this.size);
+    CTX.globalCompositeOperation = "source-over";
+  }
+  update() {
+    this.draw();
+    this.size -= 0.3;
+    this.ttl += 1;
+    this.pos.add(this.vel);
+    this.vel.y -= this.gravity;
+  }
 }
 
-function setup() {
-    cnvRes();
-    _input.listen();
-    _vars.segments = 20;
-    _vars.snakeLength = 1;
-    _vars.snake = new Snake("head");
-    _vars.food = new Food();
-    loop();
+function incrementScore() {
+  score++;
+  dom_score.innerText = score.toString().padStart(2, "0");
+}
+
+function particleSplash() {
+  for (let i = 0; i < splashingParticleCount; i++) {
+    let vel = new helpers.Vec(Math.random() * 6 - 3, Math.random() * 6 - 3);
+    let position = new helpers.Vec(food.pos.x, food.pos.y);
+    particles.push(new Particle(position, currentHue, food.size, vel));
+  }
+}
+
+function clear() {
+  CTX.clearRect(0, 0, W, H);
+}
+
+function initialize() {
+  CTX.imageSmoothingEnabled = false;
+  KEY.listen();
+  cellsCount = cells * cells;
+  cellSize = W / cells;
+  snake = new Snake();
+  food = new Food();
+  dom_replay.addEventListener("click", reset, false);
+  loop();
 }
 
 function loop() {
-    _vars.update = setInterval(() => {
-        if (!_vars.gameOver) {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            grid();
-            _vars.snake.update();
-            if (_vars.tails.length) {
-                for (let i = 0; i < _vars.tails.length; i++) {
-                    _vars.tails[i].update();
-                }
-            }
-            _vars.food.draw();
-            scoreManager();
-            for (let i = 0; i < _vars.particles.length; i++) {
-                _vars.particles[i].update();
-            }
-            cleanMem();
-        } else {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            gameOver();
-        }
-    }, 1000 / 60);
+  clear();
+  if (!isGameOver) {
+    requestID = setTimeout(loop, 1000 / 60);
+    helpers.drawGrid();
+    snake.update();
+    food.draw();
+    for (let p of particles) {
+      p.update();
+    }
+    helpers.garbageCollector();
+  } else {
+    clear();
+    gameOver();
+  }
 }
-setup();
 
-replay.addEventListener("click", () => {
-    reset();
-});
 function gameOver() {
-    _vars.maxScore ? null : (_vars.maxScore = _vars.snakeLength - 1);
-    _vars.snakeLength - 1 > _vars.maxScore
-        ? (_vars.maxScore = _vars.snakeLength - 1)
-        : null;
-    window.localStorage.setItem("maxScore", _vars.maxScore);
-    ctx.fillStyle = "#4cffd7";
-    ctx.textAlign = "center";
-    ctx.font = "bold 30px Poppins, sans-serif";
-    ctx.fillText("GAME OVER", ctx.canvas.width / 2, ctx.canvas.height / 2);
-    ctx.font = "15px Poppins, sans-serif";
-    ctx.fillText(
-        `SCORE   ${_vars.snakeLength - 1}`,
-        ctx.canvas.width / 2,
-        ctx.canvas.height / 2 + 60
-    );
-    ctx.fillText(
-        `MAXSCORE   ${_vars.maxScore}`,
-        ctx.canvas.width / 2,
-        ctx.canvas.height / 2 + 80
-    );
+  maxScore ? null : (maxScore = score);
+  score > maxScore ? (maxScore = score) : null;
+  window.localStorage.setItem("maxScore", maxScore);
+  CTX.fillStyle = "#4cffd7";
+  CTX.textAlign = "center";
+  CTX.font = "bold 30px Poppins, sans-serif";
+  CTX.fillText("GAME OVER", W / 2, H / 2);
+  CTX.font = "15px Poppins, sans-serif";
+  CTX.fillText(`SCORE   ${score}`, W / 2, H / 2 + 60);
+  CTX.fillText(`MAXSCORE   ${maxScore}`, W / 2, H / 2 + 80);
 }
 
 function reset() {
-    clearInterval(_vars.update);
-    _vars.snake = undefined;
-    _vars.snakeLength = undefined;
-    _vars.food = undefined;
-    _vars.currentHue = undefined;
-    _vars.segments = undefined;
-    _vars.historyPath = [];
-    _vars.gameOver = false;
-    _vars.tails = [];
-    _vars.update = undefined;
-    _input.left = false;
-    _input.down = false;
-    _input.right = true;
-    _input.up = false;
-    setup();
+  dom_score.innerText = "00";
+  score = "00";
+  snake = new Snake();
+  food.spawn();
+  KEY.resetState();
+  isGameOver = false;
+  clearTimeout(requestID);
+  loop();
 }
 
+initialize();
